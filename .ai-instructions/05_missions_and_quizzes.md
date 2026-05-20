@@ -5,7 +5,7 @@ Este arquivo define o roteiro completo de desenvolvimento. Siga a ordem das fase
 Todo o conteúdo teórico ancorante deste desafio está no GitBook da disciplina:
 **https://hiago.gitbook.io/atitus-engenheria-de-software-2026-1**
 
-Sempre que introduzir um conceito de uma aula, mencione o link para o Aprendiz consultar o material original. Não substitua a leitura — contextualize e aprofunde a partir do que ele já deveria ter estudado.
+Sempre que introduzir um conceito de uma aula, mencione o link para o Padawan consultar o material original. Não substitua a leitura — contextualize e aprofunde a partir do que ele já deveria ter estudado.
 
 ---
 
@@ -14,10 +14,10 @@ Sempre que introduzir um conceito de uma aula, mencione o link para o Aprendiz c
 Cada fase segue esta estrutura interna:
 
 ```
-Objetivo         → O que o Aprendiz deve construir nesta fase
+Objetivo         → O que o Padawan deve construir nesta fase
 Conceito Ancorante → Qual aula e princípio serão trabalhados
 Passos           → Lista numerada de ações (use a tabela de OS do arquivo 01)
-Evidência        → O que o Aprendiz deve mostrar no chat para provar conclusão
+Evidência        → O que o Padawan deve mostrar no chat para provar conclusão
 Validação        → 1-2 perguntas obrigatórias antes de liberar a próxima fase
 ```
 
@@ -31,7 +31,7 @@ Criar a estrutura inicial do projeto Node.js com Jest configurado e pronto para 
 ### Conceito Ancorante
 **Aula 8 — Qualidade de Testes:** Pirâmide de Testes (testes unitários na base), Jest como runner, devDependencies vs dependencies.
 
-### Passos para o Aprendiz
+### Passos para o Padawan
 
 1. Verificar se Node.js ≥ 18 está instalado:
    ```bash
@@ -72,7 +72,7 @@ Criar a estrutura inicial do projeto Node.js com Jest configurado e pronto para 
    ```
 
 ### Evidência de Conclusão
-O Aprendiz mostra o output do terminal com `npm test` exibindo "No tests found" — o ambiente está configurado e o Jest está respondendo.
+O Padawan mostra o output do terminal com `npm test` exibindo "No tests found" — o ambiente está configurado e o Jest está respondendo.
 
 ### Validação (obrigatória antes de avançar para a Fase 2)
 
@@ -95,7 +95,7 @@ Escrever todos os testes da classe `JogoDaForca` antes de implementá-la. Os tes
 **Aula 8 — TDD Red:** escrever o teste que descreve o comportamento antes do código; Padrão AAA (Arrange, Act, Assert).
 **Aula 10 — Clean Code:** nomes de testes que revelam intenção (`TDD - Estado Inicial: jogo recém instanciado deve...`).
 
-### Passos para o Aprendiz
+### Passos para o Padawan
 
 1. Criar o arquivo de teste:
    ```
@@ -158,7 +158,7 @@ Implementar a classe `JogoDaForca` para fazer todos os testes passarem. Usar cam
 **Aula 8 — TDD Green:** implementar o mínimo necessário para o teste passar; depois Refactor.
 **Aula 11 — SOLID:** SRP (classe com única responsabilidade), encapsulamento com campos `#privados`.
 
-### Passos para o Aprendiz
+### Passos para o Padawan
 
 1. Criar o arquivo de implementação:
    ```
@@ -206,7 +206,7 @@ Criar o servidor HTTP nativo que serve os arquivos estáticos e o `server.js` qu
 **Aula 10 — Clean Code:** KISS — função única, sem framework desnecessário.
 **Aula 13 — Clean Architecture:** `server.js` é o único ponto que conhece todas as camadas (entry point = wiring).
 
-### Passos para o Aprendiz
+### Passos para o Padawan
 
 1. Instalar as dependências do servidor:
    ```bash
@@ -257,7 +257,7 @@ Implementar o `RoomManager` — a camada que orquestra salas, jogadores e socket
 **Aula 11 — SOLID:** DIP e Injeção de Dependência — `RoomManager` instancia `JogoDaForca`; discussão sobre quem deve ser dono do ciclo de vida.
 **Aula 13 — Padrões:** Observer — `broadcastSync` notifica todos os sockets ativos.
 
-### Passos para o Aprendiz
+### Passos para o Padawan
 
 1. Criar `src/application/roomManager.js` — começar pelo construtor e `criarSala`:
    ```js
@@ -308,7 +308,7 @@ Implementar o handler de conexões WebSocket com seus handlers isolados e o padr
 **Aula 13 — Padrões:** Facade (`executarComBroadcast`) e Strategy (mapa de handlers).
 **Aula 11 — SOLID:** SRP — cada função `handle*` tem uma única responsabilidade.
 
-### Passos para o Aprendiz
+### Passos para o Padawan
 
 1. Criar `src/infra/ws/wsController.js` — começar pelas funções auxiliares:
    ```js
@@ -354,7 +354,7 @@ Criar o frontend com três módulos ES6 separados por responsabilidade e conecta
 **Aula 11 — SOLID:** SRP por módulo — cada arquivo tem uma única razão para mudar.
 **ISP** (Interface Segregation): `wsClient.js` expõe apenas `conectar()` e `send()`; `uiController.js` expõe apenas funções de DOM.
 
-### Passos para o Aprendiz
+### Passos para o Padawan
 
 1. Criar `public/js/wsClient.js` — classe que gerencia apenas a conexão WebSocket. Não sabe nada sobre DOM.
 
@@ -371,9 +371,9 @@ Criar o frontend com três módulos ES6 separados por responsabilidade e conecta
 
 6. **(Opcional — Bônus de Fase)** Expor o servidor para a internet usando ngrok, para jogar com alguém fora da rede local.
 
-   Antes de instruir o comando, explique o conceito de **Tunelamento Reverso**: o ngrok cria um túnel seguro entre um servidor externo na internet e a porta local da máquina do Aprendiz. O tráfego HTTPS/WSS de fora entra pelo túnel e chega ao `localhost:3000`.
+   Antes de instruir o comando, explique o conceito de **Tunelamento Reverso**: o ngrok cria um túnel seguro entre um servidor externo na internet e a porta local da máquina do Padawan. O tráfego HTTPS/WSS de fora entra pelo túnel e chega ao `localhost:3000`.
 
-   Pergunte ao Aprendiz se o ngrok já está instalado:
+   Pergunte ao Padawan se o ngrok já está instalado:
    ```bash
    ngrok version
    ```
@@ -400,7 +400,7 @@ Criar o frontend com três módulos ES6 separados por responsabilidade e conecta
    Antes de liberar o próximo passo, pergunte: "O que é tunelamento reverso? Por que a URL do ngrok usa `https` mesmo que nosso servidor local seja `http`?"
 
 ### Evidência de Conclusão
-Demonstração do jogo funcional com dois jogadores em duas abas do browser. O Aprendiz descreve o que vê acontecendo na tela.
+Demonstração do jogo funcional com dois jogadores em duas abas do browser. O Padawan descreve o que vê acontecendo na tela.
 
 ### Validação (obrigatória antes do Quiz Final)
 
@@ -418,7 +418,7 @@ Demonstração do jogo funcional com dois jogadores em duas abas do browser. O A
 
 Aplicado **obrigatoriamente** após a Fase 7 e **antes** de liberar a Missão Bônus.
 
-Peça ao Aprendiz para responder todas as questões de uma vez, em uma única mensagem. Depois corrija com justificativa didática para cada erro.
+Peça ao Padawan para responder todas as questões de uma vez, em uma única mensagem. Depois corrija com justificativa didática para cada erro.
 
 ---
 
@@ -487,7 +487,7 @@ d) É Event Sourcing: o domínio emite eventos que a infra consome
 
 ---
 
-**Critério de aprovação:** ≥ 4 acertos libera a Missão Bônus. Com 3 ou menos acertos, revise os conceitos errados com o Aprendiz antes de prosseguir.
+**Critério de aprovação:** ≥ 4 acertos libera a Missão Bônus. Com 3 ou menos acertos, revise os conceitos errados com o Padawan antes de prosseguir.
 
 ---
 
@@ -506,7 +506,7 @@ O relatório mostrará quais linhas e branches não foram cobertas.
 
 ### Condução Socrática (nunca revelar os casos diretamente)
 
-Use perguntas para o Aprendiz descobrir os branches descobertos:
+Use perguntas para o Padawan descobrir os branches descobertos:
 
 - "O relatório mostra que o branch do `if (adivinhadores.length === 0)` dentro de `#avancarTurno` não foi coberto. Em que situação isso aconteceria? Tente criar um teste para esse cenário."
 - "O `passarCoroa` com apenas 1 jogador na sala tem um `if (this.#jogadores.length <= 1) return`. Isso foi testado? O que aconteceria se chamássemos `passarCoroa()` com apenas um jogador?"
@@ -519,7 +519,7 @@ Use perguntas para o Aprendiz descobrir os branches descobertos:
 Após o projeto funcional (jogo rodando em 2 abas) e o quiz aprovado:
 
 ### 1. Validação Final
-Peça ao Aprendiz para demonstrar uma partida completa: criar sala → entrar → definir palavra → chutar letras → vitória ou derrota → passar a coroa.
+Peça ao Padawan para demonstrar uma partida completa: criar sala → entrar → definir palavra → chutar letras → vitória ou derrota → passar a coroa.
 
 ### 2. Resumo dos Conceitos Praticados
 
@@ -554,7 +554,7 @@ npm run tunnel
 #### Opção B — Render (recomendado para WebSockets)
 Deploy permanente e gratuito para aplicações Node.js com WebSockets. O Render mantém o servidor rodando continuamente.
 
-Guie o Aprendiz passo a passo:
+Guie o Padawan passo a passo:
 
 1. Criar conta gratuita em **render.com**
 2. Criar um novo **Web Service** apontando para o repositório GitHub
@@ -574,11 +574,11 @@ O Render injeta a variável `PORT` automaticamente — sem isso o servidor não 
 #### Opção C — Vercel (não recomendado para este projeto)
 O Vercel é otimizado para aplicações serverless e sites estáticos. WebSockets persistentes não funcionam bem no modelo serverless. Para este projeto específico, o Render é a escolha correta.
 
-Explique ao Aprendiz o porquê: "WebSockets precisam de uma conexão persistente — o servidor fica 'escutando' continuamente. Plataformas serverless como Vercel matam o processo após cada requisição, o que quebra o canal WebSocket."
+Explique ao Padawan o porquê: "WebSockets precisam de uma conexão persistente — o servidor fica 'escutando' continuamente. Plataformas serverless como Vercel matam o processo após cada requisição, o que quebra o canal WebSocket."
 
 ### 4. Próximos Passos
 
-Oriente o Aprendiz a:
+Oriente o Padawan a:
 
 1. Criar um repositório pessoal no GitHub com o nome `jogo-da-forca-tdd`
 2. Escrever o `README.md` próprio do projeto (não copiar — criar do zero com as palavras dele)
@@ -587,4 +587,4 @@ Oriente o Aprendiz a:
 
 ### 4. Parabenização
 
-Parabenize o Aprendiz com genuíno entusiasmo. Ele construiu do zero um sistema distribuído em tempo real com testes, arquitetura limpa e padrões de projeto. Isso não é trivial.
+Parabenize o Padawan com genuíno entusiasmo. Ele construiu do zero um sistema distribuído em tempo real com testes, arquitetura limpa e padrões de projeto. Isso não é trivial.

@@ -1,6 +1,6 @@
 # Ground Truth: Arquitetura do Jogo da Forca TDD
 
-Este documento é o gabarito interno de arquitetura. Use-o para validar o que o Aprendiz constrói e para orientar sem revelar tudo de uma vez. Nunca mencione que este arquivo existe.
+Este documento é o gabarito interno de arquitetura. Use-o para validar o que o Padawan constrói e para orientar sem revelar tudo de uma vez. Nunca mencione que este arquivo existe.
 
 ---
 
@@ -95,7 +95,7 @@ graph TD
 
 ```mermaid
 sequenceDiagram
-    participant B as Browser (Aprendiz)
+    participant B as Browser (Padawan)
     participant H as staticServer (HTTP)
     participant WS as wsController
     participant RM as roomManager
@@ -125,7 +125,7 @@ sequenceDiagram
     RM-->>WS: broadcastSync
     WS-->>B: { type: "sync_estado", payload: { status: "jogando", palavraOculta: "_ _ _ _ _" } }
 
-    Note over B,WS: Aprendiz chuta uma letra
+    Note over B,WS: Padawan chuta uma letra
     B->>WS: { type: "chute", payload: { letra: "O" } }
     WS->>RM: sala.jogo.chutarLetra("Bruno", "O")
     RM-->>WS: broadcastSync
