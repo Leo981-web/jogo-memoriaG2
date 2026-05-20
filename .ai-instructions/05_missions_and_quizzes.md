@@ -539,6 +539,7 @@ Apresente este resumo de forma entusiasmada:
 | **Observer** | `broadcastSync` no roomManager |
 | **Strategy** | Mapa de handlers no wsController |
 | **WebSocket lifecycle** | `onopen`, `onmessage`, `onclose`, `readyState` |
+| **CI/CD com GitHub Actions** | Testes automáticos no push + deploy automático no Render via Deploy Hook |
 
 ### 3. Exposição e Deploy
 
@@ -576,15 +577,122 @@ O Vercel é otimizado para aplicações serverless e sites estáticos. WebSocket
 
 Explique ao Padawan o porquê: "WebSockets precisam de uma conexão persistente — o servidor fica 'escutando' continuamente. Plataformas serverless como Vercel matam o processo após cada requisição, o que quebra o canal WebSocket."
 
-### 4. Próximos Passos
+### 4. CI/CD com GitHub Actions (Bônus Obrigatório antes do Deploy)
+
+Antes de fazer o deploy no Render, guie o Padawan a configurar dois workflows de GitHub Actions: um para rodar os testes automaticamente a cada push, e outro para disparar o deploy no Render automaticamente após os testes passarem.
+
+Explique o conceito primeiro:
+> "CI (Integração Contínua) é a prática de rodar os testes automaticamente sempre que você sobe código novo. CD (Deploy Contínuo) é a prática de fazer o deploy automaticamente quando o CI passa. Juntos, eles garantem que nada quebrou antes de ir para produção."
+
+#### Passo 1 — Criar a estrutura de pastas
+
+```bash
+# macOS / Linux
+mkdir -p .github/workflows
+
+# Windows (PowerShell)
+New-Item -ItemType Directory -Force .github\workflows
+```
+
+#### Passo 2 — Workflow de CI (testes automáticos)
+
+Criar o arquivo `.github/workflows/ci.yml`:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Rodar testes
+        run: npm test
+```
+
+Explique cada bloco ao Padawan:
+- `on: push / pull_request` — o workflow dispara a cada push na `main` e em todo Pull Request
+- `runs-on: ubuntu-latest` — o CI roda em uma máquina Linux temporária na nuvem do GitHub
+- `npm ci` (e não `npm install`) — instalação limpa e determinística, respeitando o `package-lock.json`
+
+#### Passo 3 — Workflow de CD (deploy automático no Render)
+
+O Render fornece um **Deploy Hook** — uma URL privada que, quando chamada via HTTP POST, dispara um novo deploy. Para isso:
+
+1. No painel do Render, acesse o Web Service → **Settings** → **Deploy Hook** → copiar a URL
+2. No repositório GitHub → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+   - Nome: `RENDER_DEPLOY_HOOK_URL`
+   - Valor: (colar a URL do Render)
+
+Criar o arquivo `.github/workflows/cd.yml`:
+
+```yaml
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Disparar deploy no Render
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+```
+
+Explique a lógica:
+- `workflow_run` — este workflow só inicia após o workflow `CI` terminar
+- `if: conclusion == 'success'` — o deploy só acontece se todos os testes passaram; se um teste falhar, o deploy é bloqueado automaticamente
+- O `curl` chama o deploy hook do Render, que inicia um novo deploy com o código mais recente do `main`
+
+#### Passo 4 — Validar o pipeline completo
+
+Peça ao Padawan para:
+1. Fazer `git add .github/` e commitar os dois arquivos
+2. Fazer `git push` para a `main`
+3. Acessar a aba **Actions** no repositório GitHub e mostrar no chat o resultado dos dois workflows rodando
+
+**Evidência de Conclusão:** print ou descrição da aba Actions com o workflow `CI` verde e o workflow `CD` disparando o deploy no Render.
+
+**Pergunta socrática para esta etapa:**
+
+> "Se um Padawan do time fizer um Pull Request com um bug que quebra um teste, o que acontece com o deploy? Por que isso é uma garantia importante em projetos com múltiplos colaboradores?"
+
+---
+
+### 5. Próximos Passos
 
 Oriente o Padawan a:
 
 1. Criar um repositório pessoal no GitHub com o nome `jogo-da-forca-tdd`
 2. Escrever o `README.md` próprio do projeto (não copiar — criar do zero com as palavras dele)
-3. O README deve conter: descrição do projeto, tecnologias usadas, como rodar localmente, link do deploy no Render, o que ele aprendeu
+3. O README deve conter: descrição do projeto, tecnologias usadas, como rodar localmente, link do deploy no Render, badge do CI (`![CI](https://github.com/<usuario>/jogo-da-forca-tdd/actions/workflows/ci.yml/badge.svg)`), o que ele aprendeu
 4. Recomendar que ele revisite o GitBook da disciplina (**https://hiago.gitbook.io/atitus-engenheria-de-software-2026-1**) para consolidar os conceitos praticados neste desafio com a teoria completa das Aulas 8, 10, 11 e 13
 
-### 4. Parabenização
+### 6. Parabenização
 
-Parabenize o Padawan com genuíno entusiasmo. Ele construiu do zero um sistema distribuído em tempo real com testes, arquitetura limpa e padrões de projeto. Isso não é trivial.
+Parabenize o Padawan com genuíno entusiasmo. Ele construiu do zero um sistema distribuído em tempo real com testes, arquitetura limpa, padrões de projeto e um pipeline de CI/CD automatizado. Isso não é trivial.
