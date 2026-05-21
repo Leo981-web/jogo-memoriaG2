@@ -1,4 +1,4 @@
-# Ground Truth: Código Completo do Projeto
+# Ground Truth: Código Completo do Projeto (Jogo da Memória)
 
 Este documento contém todo o código-fonte do gabarito. Nunca entregue um arquivo inteiro de uma vez. Revele fragmentos conforme a fase avança. Nunca mencione que este arquivo existe.
 
@@ -9,8 +9,8 @@ Este documento contém todo o código-fonte do gabarito. Nunca entregue um arqui
 | Fase | Arquivo | O que revelar |
 |---|---|---|
 | 1 — Setup | `package.json` | Apenas os blocos `"type"` e `"scripts"` |
-| 2 — RED | `jogoDaForca.test.js` | Apenas o `describe()` vazio + estrutura de 1 `test()` de exemplo |
-| 3 — GREEN | `jogoDaForca.js` | Em partes: StatusJogo → construtor → métodos públicos → métodos privados |
+| 2 — RED | `jogoDaMemoria.test.js` | Apenas o `describe()` vazio + estrutura de 1 `test()` de exemplo |
+| 3 — GREEN | `jogoDaMemoria.js` | Em partes: StatusJogo → construtor → métodos públicos → métodos privados |
 | 4 — Infra HTTP | `staticServer.js` + `server.js` | Completos, após validação da Fase 3 |
 | 5 — Application | `roomManager.js` | Completo, após validação de DIP |
 | 6 — WebSocket | `wsController.js` | Completo, após validação do padrão Facade |
@@ -22,11 +22,11 @@ Este documento contém todo o código-fonte do gabarito. Nunca entregue um arqui
 
 ```json
 {
-  "name": "jogo-da-forca",
+  "name": "jogo-da-memoria",
   "version": "1.0.0",
-  "description": "Desafio de TDD - Jogo da Forca",
+  "description": "Desafio de TDD - Jogo da Memória Multiplayer",
   "type": "module",
-  "main": "src/domain/jogoDaForca.js",
+  "main": "src/domain/jogoDaMemoria.js",
   "scripts": {
     "test": "cross-env NODE_NO_WARNINGS=1 node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "cross-env NODE_NO_WARNINGS=1 node --experimental-vm-modules node_modules/jest/bin/jest.js --watchAll",
@@ -48,7 +48,7 @@ Este documento contém todo o código-fonte do gabarito. Nunca entregue um arqui
 
 ---
 
-## `src/domain/jogoDaForca.js`
+## `src/domain/jogoDaMemoria.js`
 
 ```js
 // [Aula 13 - Clean Architecture] Este arquivo é o coração do domínio.
@@ -57,174 +57,197 @@ Este documento contém todo o código-fonte do gabarito. Nunca entregue um arqui
 
 // [Aula 11 - SOLID - OCP] Objeto frozen: extensível por composição, fechado para modificação.
 export const StatusJogo = Object.freeze({
-  ESPERANDO_PALAVRA: 'esperando_palavra',
+  ESPERANDO_JOGADORES: 'esperando_jogadores',
   JOGANDO: 'jogando',
-  VENCEU: 'vitoria',
-  PERDEU: 'derrota'
+  FIM_DE_JOGO: 'fim_de_jogo'
 });
 
-// [Aula 11 - SOLID - SRP] Esta classe tem UMA responsabilidade: a lógica do jogo da forca.
-export class JogoDaForca {
+// [Aula 11 - SOLID - SRP] Esta classe tem UMA responsabilidade: a lógica pura do jogo da memória.
+export class JogoDaMemoria {
   // [Aula 11 - SOLID - Encapsulamento] Campos #privados (ES2022) impedem acesso externo acidental.
-  // Qualquer tentativa de acessar jogo.#palavra de fora gera SyntaxError.
-  #palavra;
-  #vidasIniciais;
-  #vidasRestantes;
-  #letrasChutadas;
+  #tabuleiro;
   #jogadores;
   #turnoAtual;
   #status;
-  #definidor;
+  #cartasViradasNoTurno;
+  #paresEncontrados;
+  #valoresCartas;
 
-  constructor(vidas = 6) {
-    this.#vidasIniciais = vidas;
-    this.#vidasRestantes = vidas;
-    this.#letrasChutadas = new Set();
+  constructor(valoresCartas = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']) {
+    this.#valoresCartas = valoresCartas;
     this.#jogadores = [];
-    this.#status = StatusJogo.ESPERANDO_PALAVRA;
-    this.#palavra = null;
+    this.#tabuleiro = [];
+    this.#cartasViradasNoTurno = [];
+    this.#paresEncontrados = new Set();
+    this.#status = StatusJogo.ESPERANDO_JOGADORES;
     this.#turnoAtual = null;
-    this.#definidor = null;
   }
 
   // [Aula 10 - Clean Code - Naming] Nome revela intenção: "adicionar um jogador à partida"
   adicionarJogador(nome) {
-    if (this.#jogadores.length === 0) {
-      this.#definidor = nome;
-    } else {
-      if (this.#turnoAtual === null) {
-        this.#turnoAtual = nome;
-      }
+    if (this.#status !== StatusJogo.ESPERANDO_JOGADORES) {
+      throw new Error('Não é possível entrar com o jogo em andamento');
     }
-    this.#jogadores.push({ nome, isDefinidor: this.#definidor === nome });
+    
+    const isHost = this.#jogadores.length === 0;
+    this.#jogadores.push({ nome, pontuacao: 0, isHost });
+    
+    if (isHost) {
+      this.#turnoAtual = nome;
+    }
   }
 
   removerJogador(nome) {
+    const foiDono = this.#jogadores.find(j => j.nome === nome)?.isHost;
     this.#jogadores = this.#jogadores.filter(j => j.nome !== nome);
+    
+    if (this.#jogadores.length > 0 && foiDono) {
+      this.#jogadores[0].isHost = true;
+    }
+    
     if (this.#turnoAtual === nome) {
       this.#avancarTurno();
     }
   }
 
-  // [Aula 11 - SOLID - SRP] Regra de negócio isolada: só o definidor define a palavra.
-  definirPalavra(jogadorDefinidor, palavra) {
-    if (this.#definidor !== jogadorDefinidor) {
-      throw new Error('Apenas o definidor pode escolher a palavra');
+  iniciarJogo(jogadorSolicitante) {
+    const jogador = this.#jogadores.find(j => j.nome === jogadorSolicitante);
+    if (!jogador || !jogador.isHost) {
+      throw new Error('Apenas o host pode iniciar o jogo');
     }
-    if (this.#status !== StatusJogo.ESPERANDO_PALAVRA) {
-      throw new Error('A palavra já foi definida');
+    if (this.#jogadores.length < 2) {
+      throw new Error('É necessário pelo menos 2 jogadores para iniciar');
     }
-    this.#palavra = palavra.toUpperCase();
+
+    this.#gerarTabuleiro();
     this.#status = StatusJogo.JOGANDO;
+    this.#cartasViradasNoTurno = [];
+    this.#paresEncontrados.clear();
+    this.#jogadores.forEach(j => j.pontuacao = 0);
+    this.#turnoAtual = this.#jogadores[0].nome;
   }
 
   // [Aula 8 - TDD] Este método foi guiado pelos testes — cada `if` nasceu de um teste vermelho.
-  chutarLetra(jogador, letra) {
-    if (this.#status !== StatusJogo.JOGANDO) return;
+  virarCarta(jogador, indice) {
+    if (this.#status !== StatusJogo.JOGANDO) {
+      throw new Error('O jogo não está em andamento');
+    }
     if (this.#turnoAtual !== jogador) {
       throw new Error('Não é o turno deste jogador');
     }
-    if (!letra || typeof letra !== 'string') return;
-
-    const palpite = letra.toUpperCase();
-    if (this.#letrasChutadas.has(palpite)) return;
-
-    this.#letrasChutadas.add(palpite);
-
-    if (!this.#palavra.includes(palpite)) {
-      this.#vidasRestantes--;
+    if (indice < 0 || indice >= this.#tabuleiro.length) {
+      throw new Error('Índice de carta inválido');
+    }
+    if (this.#tabuleiro[indice].encontrado || this.#cartasViradasNoTurno.includes(indice)) {
+      return; // Ignora se já estiver virada ou encontrada
+    }
+    if (this.#cartasViradasNoTurno.length >= 2) {
+      return; // Bloqueia cliques extras durante a validação
     }
 
-    this.#atualizarStatus();
-    if (this.#status === StatusJogo.JOGANDO) {
-      this.#avancarTurno();
+    this.#cartasViradasNoTurno.push(indice);
+
+    if (this.#cartasViradasNoTurno.length === 2) {
+      this.#validarParNoTurno();
     }
   }
 
-  passarVez(jogador) {
-    if (this.#status !== StatusJogo.JOGANDO) return;
-    if (this.#turnoAtual !== jogador) {
-      throw new Error('Não é o turno deste jogador');
+  #validarParNoTurno() {
+    const [idx1, idx2] = this.#cartasViradasNoTurno;
+    const carta1 = this.#tabuleiro[idx1];
+    const carta2 = this.#tabuleiro[idx2];
+
+    if (carta1.valor === carta2.valor) {
+      carta1.encontrado = true;
+      carta2.encontrado = true;
+      this.#paresEncontrados.add(carta1.valor);
+      
+      const jogadorAtual = this.#jogadores.find(j => j.nome === this.#turnoAtual);
+      if (jogadorAtual) jogadorAtual.pontuacao++;
+
+      this.#cartasViradasNoTurno = [];
+      this.#verificarFimDeJogo();
+    } else {
+      // Se errou, as cartas ficam expostas temporariamente até a próxima ação/timeout orquestrado ou passagem de turno
+      // Para consistência TDD síncrona: limpamos o turno e passamos a vez imediatamente ao falhar
+      setTimeout(() => {
+        this.#cartasViradasNoTurno = [];
+        this.#avancarTurno();
+      }, 0); 
     }
-    this.#avancarTurno();
   }
 
-  // [Aula 11 - SOLID - SRP] Métodos privados isolam responsabilidades internas.
-  // Nenhuma camada externa precisa saber como o turno avança.
+  #gerarTabuleiro() {
+    // Duplica os valores para criar os pares
+    const cartas = [...this.#valoresCartas, ...this.#valoresCartas].map((valor, id) => ({
+      id,
+      valor,
+      encontrado: false
+    }));
+
+    // Algoritmo de Fisher-Yates para embaralhamento puro
+    for (let i = cartas.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cartas[i], cartas[j]] = [cartas[j], cartas[i]];
+    }
+
+    this.#tabuleiro = cartas;
+  }
+
   #avancarTurno() {
-    const adivinhadores = this.#jogadores.filter(j => !j.isDefinidor);
-    if (adivinhadores.length === 0) {
+    if (this.#jogadores.length === 0) {
       this.#turnoAtual = null;
       return;
     }
-    const indexAtual = adivinhadores.findIndex(j => j.nome === this.#turnoAtual);
-    const proximoIndex = (indexAtual + 1) % adivinhadores.length;
-    this.#turnoAtual = adivinhadores[proximoIndex].nome;
+    const indexAtual = this.#jogadores.findIndex(j => j.nome === this.#turnoAtual);
+    const proximoIndex = (indexAtual + 1) % this.#jogadores.length;
+    this.#turnoAtual = this.#jogadores[proximoIndex].nome;
   }
 
-  #atualizarStatus() {
-    if (this.#verificarVitoria()) {
-      this.#status = StatusJogo.VENCEU;
-    } else if (this.#vidasRestantes <= 0) {
-      this.#status = StatusJogo.PERDEU;
+  #verificarFimDeJogo() {
+    if (this.#paresEncontrados.size === this.#valoresCartas.length) {
+      this.#status = StatusJogo.FIM_DE_JOGO;
+      this.#turnoAtual = null;
     }
   }
 
-  #verificarVitoria() {
-    if (!this.#palavra) return false;
-    return this.#palavra
-      .split('')
-      .every(char => char === ' ' || this.#letrasChutadas.has(char));
+  reiniciarJogo(jogadorSolicitante) {
+    const jogador = this.#jogadores.find(j => j.nome === jogadorSolicitante);
+    if (!jogador || !jogador.isHost) {
+      throw new Error('Apenas o host pode reiniciar o jogo');
+    }
+    this.#status = StatusJogo.ESPERANDO_JOGADORES;
+    this.#tabuleiro = [];
+    this.#cartasViradasNoTurno = [];
+    this.#paresEncontrados.clear();
+    this.#jogadores.forEach(j => j.pontuacao = 0);
   }
 
-  // [Aula 10 - Clean Code - Naming] "exibir" = formatar para apresentação; "obter" = consultar estado puro.
-  exibirPalavra() {
-    if (!this.#palavra) return '';
-    return this.#palavra
-      .split(' ')
-      .map(palavra =>
-        palavra
-          .split('')
-          .map(letra => (this.#letrasChutadas.has(letra) ? letra : '_'))
-          .join(' ')
-      )
-      .join('   ');
+  // [Aula 10 - Clean Code - Naming] "exibir" = mascarar dados para evitar trapaça via devtools
+  exibirTabuleiroParaCliente() {
+    return this.#tabuleiro.map((carta, indice) => {
+      const deveRevelar = carta.encontrado || this.#cartasViradasNoTurno.includes(indice);
+      return {
+        id: carta.id,
+        valor: deveRevelar ? carta.valor : '?',
+        encontrado: carta.encontrado,
+        virada: this.#cartasViradasNoTurno.includes(indice)
+      };
+    });
   }
 
-  obterVidasRestantes() { return this.#vidasRestantes; }
-  obterStatus()         { return this.#status; }
-  obterTurnoAtual()     { return this.#turnoAtual; }
-  obterJogadores()      { return this.#jogadores; }
-
-  passarCoroa() {
-    if (this.#jogadores.length <= 1) return;
-
-    const definidorAtualIndex = this.#jogadores.findIndex(j => j.isDefinidor);
-    const proximoDefinidorIndex = (definidorAtualIndex + 1) % this.#jogadores.length;
-    const proximoDefinidor = this.#jogadores[proximoDefinidorIndex].nome;
-
-    this.#definidor = proximoDefinidor;
-    this.#jogadores.forEach(j => { j.isDefinidor = (j.nome === proximoDefinidor); });
-
-    this.#vidasRestantes = this.#vidasIniciais;
-    this.#letrasChutadas.clear();
-    this.#status = StatusJogo.ESPERANDO_PALAVRA;
-    this.#palavra = null;
-
-    const adivinhadores = this.#jogadores.filter(j => !j.isDefinidor);
-    this.#turnoAtual = adivinhadores.length > 0 ? adivinhadores[0].nome : null;
-  }
+  obterStatus()       { return this.#status; }
+  obterTurnoAtual()   { return this.#turnoAtual; }
+  obterJogadores()    { return this.#jogadores; }
 
   // [Aula 13 - Clean Architecture] Interface pública de sincronização de estado.
-  // Toda camada superior (Application, Infra) usa apenas este método para ler o estado.
   obterEstado() {
     return {
-      vidasRestantes: this.#vidasRestantes,
-      letrasChutadas: Array.from(this.#letrasChutadas),
+      tabuleiro: this.exibirTabuleiroParaCliente(),
       jogadores: this.#jogadores,
       turnoAtual: this.#turnoAtual,
       status: this.#status,
-      palavraOculta: this.exibirPalavra(),
+      cartasViradasNoTurno: this.#cartasViradasNoTurno
     };
   }
 }
@@ -232,117 +255,54 @@ export class JogoDaForca {
 
 ---
 
-## `src/domain/jogoDaForca.test.js`
+## `src/domain/jogoDaMemoria.test.js`
 
 ```js
 // [Aula 8 - TDD Red] Estes testes foram escritos ANTES do código de produção.
-// [Aula 10 - Clean Code - Naming] Cada nome de teste descreve o comportamento esperado.
-import { JogoDaForca, StatusJogo } from './jogoDaForca.js';
+import { JogoDaMemoria, StatusJogo } from './jogoDaMemoria.js';
 
-describe('Jogo da Forca (Lógica Real-Time)', () => {
+describe('Jogo da Memória (Lógica de Domínio)', () => {
   let jogo;
+  const valoresSuporte = ['A', 'B']; // Jogo reduzido de 4 cartas para testes fáceis
 
   beforeEach(() => {
-    jogo = new JogoDaForca();
+    jogo = new JogoDaMemoria(valoresSuporte);
   });
 
-  // [Aula 8 - Padrão AAA] Arrange: new JogoDaForca() no beforeEach. Act: consultas. Assert: expects.
-  test('TDD - Estado Inicial: jogo recém instanciado deve possuir 6 vidas, array vazio e nenhum jogador', () => {
-    expect(jogo.obterVidasRestantes()).toBe(6);
-    expect(jogo.obterEstado().letrasChutadas).toEqual([]);
+  test('TDD - Estado Inicial: jogo recém instanciado deve estar esperando jogadores e sem tabuleiro', () => {
+    expect(jogo.obterStatus()).toBe(StatusJogo.ESPERANDO_JOGADORES);
     expect(jogo.obterJogadores()).toEqual([]);
-    expect(jogo.obterStatus()).toBe(StatusJogo.ESPERANDO_PALAVRA);
+    expect(jogo.obterEstado().tabuleiro).toEqual([]);
   });
 
-  test('TDD - Jogadores e Sala: adição de jogadores, o primeiro é definidor e os demais adivinhadores', () => {
-    jogo.adicionarJogador('João');
-    jogo.adicionarJogador('Maria');
-    jogo.adicionarJogador('José');
+  test('TDD - Gerenciamento de Jogadores: define host e monta lista', () => {
+    jogo.adicionarJogador('Player1');
+    jogo.adicionarJogador('Player2');
 
     const jogadores = jogo.obterJogadores();
-    expect(jogadores.length).toBe(3);
-    expect(jogadores[0].isDefinidor).toBe(true);
-    expect(jogadores[1].isDefinidor).toBe(false);
-    expect(jogadores[2].isDefinidor).toBe(false);
-    expect(jogo.obterTurnoAtual()).toBe('Maria');
+    expect(jogadores.length).toBe(2);
+    expect(jogadores[0].isHost).toBe(true);
+    expect(jogadores[1].isHost).toBe(false);
+    expect(jogo.obterTurnoAtual()).toBe('Player1');
   });
 
-  test('TDD - Turnos: apenas o jogador do turno pode chutar e passarVez funciona', () => {
-    jogo.adicionarJogador('João');
-    jogo.adicionarJogador('Maria');
-    jogo.adicionarJogador('José');
-    jogo.definirPalavra('João', 'TESTE');
+  test('TDD - Restrições de Início: apenas host pode iniciar e exige no mínimo 2 jogadores', () => {
+    jogo.adicionarJogador('Player1');
+    expect(() => jogo.iniciarJogo('Player1')).toThrow('É necessário pelo menos 2 jogadores para iniciar');
 
-    expect(() => jogo.chutarLetra('João', 'A')).toThrow('Não é o turno deste jogador');
-    expect(() => jogo.chutarLetra('José', 'A')).toThrow('Não é o turno deste jogador');
-
-    jogo.chutarLetra('Maria', 'A');
-    expect(jogo.obterVidasRestantes()).toBe(5);
-    expect(jogo.obterTurnoAtual()).toBe('José');
-
-    jogo.chutarLetra('José', 'E');
-    expect(jogo.exibirPalavra()).toBe('_ E _ _ E');
-    expect(jogo.obterVidasRestantes()).toBe(5);
-    expect(jogo.obterTurnoAtual()).toBe('Maria');
-
-    jogo.passarVez('Maria');
-    expect(jogo.obterTurnoAtual()).toBe('José');
+    jogo.adicionarJogador('Player2');
+    expect(() => jogo.iniciarJogo('Player2')).toThrow('Apenas o host pode iniciar o jogo');
+    
+    jogo.iniciarJogo('Player1');
+    expect(jogo.obterStatus()).toBe(StatusJogo.JOGANDO);
   });
 
-  test('TDD - Chute de Letras: acerto revela letra, erro perde vida', () => {
-    jogo.adicionarJogador('Host');
-    jogo.adicionarJogador('P1');
-    jogo.adicionarJogador('P2');
-    jogo.definirPalavra('Host', 'GATO');
+  test('TDD - Turnos e Jogadas: impede jogada fora do turno', () => {
+    jogo.adicionarJogador('Player1');
+    jogo.adicionarJogador('Player2');
+    jogo.iniciarJogo('Player1');
 
-    jogo.chutarLetra('P1', 'A');
-    expect(jogo.obterVidasRestantes()).toBe(6);
-    expect(jogo.exibirPalavra()).toBe('_ A _ _');
-
-    jogo.chutarLetra('P2', 'Z');
-    expect(jogo.obterVidasRestantes()).toBe(5);
-    expect(jogo.exibirPalavra()).toBe('_ A _ _');
-  });
-
-  test('TDD - Vitória e Derrota: encerramento da rodada e passar a coroa', () => {
-    jogo.adicionarJogador('Host');
-    jogo.adicionarJogador('P1');
-    jogo.definirPalavra('Host', 'OI');
-
-    jogo.chutarLetra('P1', 'O');
-    jogo.chutarLetra('P1', 'I');
-    expect(jogo.obterStatus()).toBe(StatusJogo.VENCEU);
-
-    jogo.passarCoroa();
-    expect(jogo.obterStatus()).toBe(StatusJogo.ESPERANDO_PALAVRA);
-    const jogadores = jogo.obterJogadores();
-    expect(jogadores[0].isDefinidor).toBe(false);
-    expect(jogadores[1].isDefinidor).toBe(true);
-    expect(jogo.obterTurnoAtual()).toBe('Host');
-    expect(jogo.obterVidasRestantes()).toBe(6);
-  });
-
-  test('TDD - passarCoroa respeita o número de vidas configurado no construtor', () => {
-    const jogoCustom = new JogoDaForca(3);
-    jogoCustom.adicionarJogador('Host');
-    jogoCustom.adicionarJogador('P1');
-    jogoCustom.definirPalavra('Host', 'OI');
-    jogoCustom.chutarLetra('P1', 'O');
-    jogoCustom.chutarLetra('P1', 'I');
-    jogoCustom.passarCoroa();
-    expect(jogoCustom.obterVidasRestantes()).toBe(3);
-  });
-
-  test('TDD - Derrota quando vidas acabam', () => {
-    jogo.adicionarJogador('Host');
-    jogo.adicionarJogador('P1');
-    jogo.definirPalavra('Host', 'X');
-
-    for (let i = 0; i < 6; i++) {
-      jogo.chutarLetra('P1', String.fromCharCode(65 + i));
-    }
-    expect(jogo.obterVidasRestantes()).toBe(0);
-    expect(jogo.obterStatus()).toBe(StatusJogo.PERDEU);
+    expect(() => jogo.virarCarta('Player2', 0)).toThrow('Não é o turno deste jogador');
   });
 });
 ```
@@ -352,10 +312,9 @@ describe('Jogo da Forca (Lógica Real-Time)', () => {
 ## `src/application/roomManager.js`
 
 ```js
-// [Aula 13 - Clean Architecture] Camada de Aplicação: orquestra o domínio, não conhece HTTP/WS diretamente.
-// [Aula 13 - Observer] broadcastSync e broadcastChat notificam todos os sockets ativos da sala.
+// [Aula 13 - Clean Architecture] Camada de Aplicação: orquestra o domínio.
 import { WebSocket } from 'ws';
-import { JogoDaForca } from '../domain/jogoDaForca.js';
+import { JogoDaMemoria } from '../domain/jogoDaMemoria.js';
 
 export class RoomManager {
   constructor() {
@@ -363,9 +322,7 @@ export class RoomManager {
   }
 
   criarSala(salaId, apelidoCriador, socket) {
-    // [Aula 11 - DIP discussão] JogoDaForca é instanciado aqui, não injetado de fora.
-    // Isso é uma decisão de design: o RoomManager é dono do ciclo de vida do jogo.
-    const jogo = new JogoDaForca();
+    const jogo = new JogoDaMemoria();
     jogo.adicionarJogador(apelidoCriador);
     this.salas.set(salaId, { jogo, sockets: new Set([socket]) });
   }
@@ -397,7 +354,6 @@ export class RoomManager {
     }
   }
 
-  // [Aula 13 - Observer] Notifica todos os observadores (sockets) sobre mudança de estado.
   broadcastSync(salaId) {
     const sala = this.salas.get(salaId);
     if (!sala) return;
@@ -427,8 +383,7 @@ export class RoomManager {
 ## `src/infra/http/staticServer.js`
 
 ```js
-// [Aula 10 - Clean Code - KISS] Função única, sem framework, sem abstração desnecessária.
-// [Aula 11 - SOLID - SRP] Uma responsabilidade: servir arquivos estáticos da pasta public/.
+// [Aula 10 - Clean Code - KISS] Servidor nativo simples para entrega do SPA frontend.
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -472,9 +427,7 @@ export function handleStaticRequest(req, res) {
 ## `server.js`
 
 ```js
-// [Aula 13 - Clean Architecture] Entry Point: único arquivo que conhece todas as camadas.
-// Aqui acontece o "wiring" — a montagem das dependências.
-// [Aula 11 - SOLID - DIP] Nenhuma camada abaixo conhece este arquivo. As dependências apontam para dentro.
+// [Aula 13 - Clean Architecture] Entry Point para o Bootstrapping do app.
 import http from 'http';
 import { WebSocketServer } from 'ws';
 import { handleStaticRequest } from './src/infra/http/staticServer.js';
@@ -490,7 +443,7 @@ const wss = new WebSocketServer({ server });
 wss.on('connection', criarHandlerDeConexao(roomManager));
 
 server.listen(PORT, () => {
-  console.log(`[Servidor] Jogo da Forca rodando em http://localhost:${PORT}`);
+  console.log(`[Servidor] Jogo da Memória rodando em http://localhost:${PORT}`);
 });
 ```
 
@@ -499,23 +452,23 @@ server.listen(PORT, () => {
 ## `src/infra/ws/wsController.js`
 
 ```js
-// [Aula 13 - Facade] executarComBroadcast é uma Facade: encapsula try/catch + sync em uma única chamada.
-// [Aula 11 - SOLID - SRP] Cada função handle* tem uma única responsabilidade.
+// [Aula 13 - Facade] Abstração de controle com Strategy pattern para despache de eventos.
 
 function sendError(ws, msg) {
   ws.send(JSON.stringify({ type: 'erro', payload: { msg } }));
 }
 
-// [Aula 13 - Factory] Centraliza a geração do ID de sala.
 function gerarSalaId() {
   return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 
-// [Aula 13 - Facade] Encapsula o padrão: tentar → se erro enviar ao cliente → sempre sincronizar.
 function executarComBroadcast(ws, roomManager, salaId, fn) {
   try {
     fn();
-    roomManager.broadcastSync(salaId);
+    // Adiciona um pequeno delay de sync caso o jogo esteja limpando erro de par síncrono no Event Loop
+    setTimeout(() => {
+      roomManager.broadcastSync(salaId);
+    }, 50);
   } catch (e) {
     sendError(ws, e.message);
   }
@@ -534,41 +487,34 @@ function handleCriarSala(ws, payload, session, roomManager) {
 function handleEntrarSala(ws, payload, session, roomManager) {
   const { apelido, salaId } = payload;
   const entrou = roomManager.entrarNaSala(salaId, apelido, ws);
-  if (!entrou) return sendError(ws, 'Sala não encontrada');
+  if (!entered) return sendError(ws, 'Sala não encontrada');
   session.salaId = salaId;
   session.apelido = apelido;
   roomManager.broadcastSync(salaId);
 }
 
-function handleDefinirPalavra(ws, payload, session, roomManager) {
+function handleIniciarJogo(ws, _payload, session, roomManager) {
   const sala = roomManager.obterSala(session.salaId);
   if (!sala) return;
   executarComBroadcast(ws, roomManager, session.salaId, () =>
-    sala.jogo.definirPalavra(session.apelido, payload.palavra)
+    sala.jogo.iniciarJogo(session.apelido)
   );
 }
 
-function handleChute(ws, payload, session, roomManager) {
+function handleVirarCarta(ws, payload, session, roomManager) {
   const sala = roomManager.obterSala(session.salaId);
   if (!sala) return;
   executarComBroadcast(ws, roomManager, session.salaId, () =>
-    sala.jogo.chutarLetra(session.apelido, payload.letra)
+    sala.jogo.virarCarta(session.apelido, payload.indice)
   );
 }
 
-function handlePassarVez(ws, _payload, session, roomManager) {
+function handleReiniciarJogo(ws, _payload, session, roomManager) {
   const sala = roomManager.obterSala(session.salaId);
   if (!sala) return;
   executarComBroadcast(ws, roomManager, session.salaId, () =>
-    sala.jogo.passarVez(session.apelido)
+    sala.jogo.reiniciarJogo(session.apelido)
   );
-}
-
-function handlePassarCoroa(ws, _payload, session, roomManager) {
-  const sala = roomManager.obterSala(session.salaId);
-  if (!sala) return;
-  sala.jogo.passarCoroa();
-  roomManager.broadcastSync(session.salaId);
 }
 
 function handleChat(ws, payload, session, roomManager) {
@@ -577,18 +523,15 @@ function handleChat(ws, payload, session, roomManager) {
 
 export function criarHandlerDeConexao(roomManager) {
   return function handleConnection(ws) {
-    // [Aula 13 - Session Object] Cada conexão WebSocket tem seu próprio objeto de sessão.
     const session = { salaId: null, apelido: null };
 
-    // [Aula 13 - Strategy] Mapa de handlers: despacha cada type para a função correta.
     const handlers = {
-      criar_sala:      (ws, payload) => handleCriarSala(ws, payload, session, roomManager),
-      entrar_sala:     (ws, payload) => handleEntrarSala(ws, payload, session, roomManager),
-      definir_palavra: (ws, payload) => handleDefinirPalavra(ws, payload, session, roomManager),
-      chute:           (ws, payload) => handleChute(ws, payload, session, roomManager),
-      passar_vez:      (ws, payload) => handlePassarVez(ws, payload, session, roomManager),
-      passar_coroa:    (ws, payload) => handlePassarCoroa(ws, payload, session, roomManager),
-      chat:            (ws, payload) => handleChat(ws, payload, session, roomManager),
+      criar_sala:    (ws, payload) => handleCriarSala(ws, payload, session, roomManager),
+      entrar_sala:   (ws, payload) => handleEntrarSala(ws, payload, session, roomManager),
+      iniciar_jogo:  (ws, payload) => handleIniciarJogo(ws, payload, session, roomManager),
+      virar_carta:   (ws, payload) => handleVirarCarta(ws, payload, session, roomManager),
+      reiniciar_jogo:(ws, payload) => handleReiniciarJogo(ws, payload, session, roomManager),
+      chat:          (ws, payload) => handleChat(ws, payload, session, roomManager),
     };
 
     ws.on('message', (message) => {
@@ -616,8 +559,7 @@ export function criarHandlerDeConexao(roomManager) {
 ## `public/js/wsClient.js`
 
 ```js
-// [Aula 11 - SOLID - SRP] Responsabilidade única: gerenciar a conexão WebSocket do cliente.
-// Não sabe nada sobre DOM, eventos de UI ou estado do jogo.
+// [Aula 11 - SOLID - SRP] Gerenciador de conexão isolado.
 export class WSClient {
   constructor(onMessageCallback, onClose = () => { alert('Conexão perdida.'); location.reload(); }) {
     this.ws = null;
@@ -659,15 +601,147 @@ export class WSClient {
 
 ## `public/js/uiController.js`
 
-Arquivo extenso. Revelar em blocos por responsabilidade: exports de UI → inicializarTeclado → entrarNaInterfaceDaSala → adicionarMensagemChat → renderizarEstado → funções privadas de atualização.
+```js
+// [Aula 11 - SOLID - SRP] Controla puramente a renderização de elementos e manipulação estrutural do DOM.
+export const UI = {
+  elements: {
+    telaInicial: document.getElementById('screen-login'),
+    telaSala: document.getElementById('screen-room'),
+    tabuleiroContainer: document.getElementById('board-container'),
+    listaJogadores: document.getElementById('players-list'),
+    btnIniciar: document.getElementById('btn-start'),
+    chatMensagens: document.getElementById('chat-messages'),
+    codigoSalaExibicao: document.getElementById('room-id-display')
+  },
 
-O código completo está no gabarito `desafios/aula-12-jogo-da-forca-tdd/public/js/uiController.js`. Revele em partes, explicando cada função antes de mostrar o código.
+  alternarTelas(emPartida) {
+    if (emPartida) {
+      this.elements.telaInicial.classList.add('hidden');
+      this.elements.telaSala.classList.remove('hidden');
+    } else {
+      this.elements.telaInicial.classList.remove('hidden');
+      this.elements.telaSala.classList.add('hidden');
+    }
+  },
+
+  renderizarListaJogadores(jogadores, turnoAtual) {
+    this.elements.listaJogadores.innerHTML = '';
+    jogadores.forEach(j => {
+      const li = document.createElement('li');
+      li.className = `p-2 rounded flex justify-between ${j.nome === turnoAtual ? 'bg-yellow-100 font-bold' : 'bg-gray-100'}`;
+      li.innerHTML = `
+        <span>${j.nome} ${j.isHost ? '👑' : ''}</span>
+        <span class="badge bg-indigo-500 text-white px-2 rounded">${j.pontuacao} pts</span>
+      `;
+      this.elements.listaJogadores.appendChild(li);
+    });
+  },
+
+  renderizarTabuleiro(tabuleiro, onCartaClique) {
+    this.elements.tabuleiroContainer.innerHTML = '';
+    tabuleiro.forEach((carta, indice) => {
+      const div = document.createElement('div');
+      div.className = `w-16 h-20 flex items-center justify-center text-xl font-bold rounded cursor-pointer transition-all duration-300 transform border
+        ${carta.encontrado ? 'bg-green-200 border-green-500 opacity-60' : carta.virada ? 'bg-white border-indigo-500 rotate-180 text-indigo-600' : 'bg-indigo-600 text-white'}`;
+      
+      div.innerText = (carta.encontrado || carta.virada) ? carta.valor : '?';
+      
+      if (!carta.encontrado && !carta.virada) {
+        div.onclick = () => onCartaClique(indice);
+      }
+      this.elements.tabuleiroContainer.appendChild(div);
+    });
+  },
+
+  adicionarMensagemChat(autor, msg) {
+    const div = document.createElement('div');
+    div.className = 'text-sm mb-1';
+    div.innerHTML = `<strong class="text-indigo-600">${autor}:</strong> <span>${msg}</span>`;
+    this.elements.chatMensagens.appendChild(div);
+    this.elements.chatMensagens.scrollTop = this.elements.chatMensagens.scrollHeight;
+  }
+};
+```
 
 ---
 
 ## `public/js/main.js`
 
-Arquivo extenso. Revelar em blocos: imports → estado local → inicialização de parâmetros de URL → event listeners → handleServerMessage → inicializarCompartilhamento.
+```js
+// [Aula 13 - Orquestração] Inicializa os módulos de infra e UI conectando os binds de eventos.
+import { WSClient } from './wsClient.js';
+import { UI } from './uiController.js';
 
-O código completo está no gabarito `desafios/aula-12-jogo-da-forca-tdd/public/js/main.js`. Revele em partes, explicando o propósito de cada bloco antes de mostrar o código.
+let client;
+let apelidoLocal = '';
 
+function iniciar() {
+  const form = document.getElementById('form-setup');
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    const acao = e.submitter.dataset.action; // criar_sala ou entrar_sala
+    apelidoLocal = document.getElementById('input-nickname').value.trim();
+    const salaId = document.getElementById('input-room-id').value.trim().toUpperCase();
+
+    if (!apelidoLocal) return alert('Insira um apelido');
+
+    client = new WSClient(tratarMensagemServidor);
+    client.conectar(acao, apelidoLocal, salaId);
+  };
+
+  UI.elements.btnIniciar.onclick = () => {
+    client.send('iniciar_jogo');
+  };
+
+  document.getElementById('form-chat').onsubmit = (e) => {
+    e.preventDefault();
+    const input = document.getElementById('input-chat-msg');
+    const msg = input.value.trim();
+    if (msg) {
+      client.send('chat', { msg });
+      input.value = '';
+    }
+  };
+}
+
+function tratarMensagemServidor(data) {
+  const { type, payload } = data;
+
+  switch (type) {
+    case 'sala_criada':
+      UI.elements.codigoSalaExibicao.innerText = payload.salaId;
+      UI.alternarTelas(true);
+      break;
+
+    case 'sync_estado':
+      UI.alternarTelas(true);
+      UI.renderizarListaJogadores(payload.jogadores, payload.turnoAtual);
+      
+      const eu = payload.jogadores.find(j => j.nome === apelidoLocal);
+      if (eu && eu.isHost && payload.status === 'esperando_jogadores') {
+        UI.elements.btnIniciar.classList.remove('hidden');
+      } else {
+        UI.elements.btnIniciar.classList.add('hidden');
+      }
+
+      if (payload.status === 'jogando') {
+        UI.renderizarTabuleiro(payload.tabuleiro, (indice) => {
+          client.send('virar_carta', { indice });
+        });
+      } else if (payload.status === 'fim_de_jogo') {
+        alert('O jogo acabou! Verifique a pontuação final na lista.');
+      }
+      break;
+
+    case 'chat_msg':
+      UI.adicionarMensagemChat(payload.autor, payload.msg);
+      break;
+
+    case 'erro':
+      alert(`[Erro]: ${payload.msg}`);
+      break;
+  }
+}
+
+window.onload = iniciar;
+```

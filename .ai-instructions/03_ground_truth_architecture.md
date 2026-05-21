@@ -1,4 +1,4 @@
-# Ground Truth: Arquitetura do Jogo da Forca TDD
+# Ground Truth: Arquitetura do Jogo da Memória TDD
 
 Este documento é o gabarito interno de arquitetura. Use-o para validar o que o Padawan constrói e para orientar sem revelar tudo de uma vez. Nunca mencione que este arquivo existe.
 
@@ -6,12 +6,12 @@ Este documento é o gabarito interno de arquitetura. Use-o para validar o que o 
 
 ## Estrutura de Camadas (Clean Architecture adaptada)
 
-```
-jogo-da-forca-tdd/
+```text
+jogo-da-memoria-tdd/
 ├── src/
 │   ├── domain/                        <- Camada de Domínio (pura, zero dependências externas)
-│   │   ├── jogoDaForca.js             <- Entidade principal + regras de negócio
-│   │   └── jogoDaForca.test.js        <- Testes co-localizados da camada de domínio
+│   │   ├── jogoDaMemoria.js           <- Entidade principal + regras de negócio (turnos, pares)
+│   │   └── jogoDaMemoria.test.js      <- Testes co-localizados da camada de domínio
 │   ├── application/                   <- Camada de Aplicação (orquestra o domínio)
 │   │   ├── roomManager.js             <- Gerenciamento de salas e sockets
 │   │   └── roomManager.test.js        <- Testes co-localizados da aplicação
@@ -26,7 +26,7 @@ jogo-da-forca-tdd/
 │   ├── index.html                     <- HTML5 + Tailwind CSS CDN + QRCode.js CDN
 │   └── js/
 │       ├── main.js                    <- Orquestração: eventos, state local, callbacks
-│       ├── uiController.js            <- Manipulação do DOM e renderização da UI
+│       ├── uiController.js            <- Manipulação do DOM e renderização da UI (cartas)
 │       └── wsClient.js                <- Gerenciamento da conexão WebSocket cliente
 ├── server.js                          <- Entry point: wiring de todas as camadas
 └── package.json
@@ -36,7 +36,7 @@ jogo-da-forca-tdd/
 
 ## Regra de Dependência
 
-```
+```text
 Domain  <--  Application  <--  Infra  <--  server.js
   ^
   |
@@ -57,9 +57,9 @@ Use esta tabela para formular as perguntas de validação de cada fase.
 
 | Camada | Arquivo(s) | Aula Ancorante | Princípio Aplicado |
 |---|---|---|---|
-| Domain | `jogoDaForca.js` | Aula 8 (TDD), Aula 11 (SOLID) | SRP — classe tem uma única razão para mudar; campos `#privados` = encapsulamento |
-| Domain (testes) | `jogoDaForca.test.js` | Aula 8 (AAA, Red/Green) | Padrão AAA; nomes descritivos de teste = documentação viva (Aula 10) |
-| Application | `roomManager.js` | Aula 11 (DIP), Aula 13 (Observer) | `RoomManager` instancia `JogoDaForca` internamente (discussão: DI vs DIP); `broadcastSync` = Observer |
+| Domain | `jogoDaMemoria.js` | Aula 8 (TDD), Aula 11 (SOLID) | SRP — classe tem uma única razão para mudar; campos `#privados` = encapsulamento |
+| Domain (testes) | `jogoDaMemoria.test.js` | Aula 8 (AAA, Red/Green) | Padrão AAA; nomes descritivos de teste = documentação viva (Aula 10) |
+| Application | `roomManager.js` | Aula 11 (DIP), Aula 13 (Observer) | `RoomManager` instancia `JogoDaMemoria` internamente (discussão: DI vs DIP); `broadcastSync` = Observer |
 | Infra / WS | `wsController.js` | Aula 13 (Facade, SRP) | `executarComBroadcast` = Facade; cada `handle*` function separada = SRP |
 | Infra / HTTP | `staticServer.js` | Aula 10 (KISS) | Função única, sem framework, mínimo necessário |
 | Entry Point | `server.js` | Aula 13 (Clean Architecture) | Único arquivo que faz o wiring — Regra de Dependência da Clean Arch |
@@ -77,14 +77,14 @@ graph TD
     WS["wsController.js (Infra / WebSocket)"]
     HTTP["staticServer.js (Infra / HTTP)"]
     RM["roomManager.js (Application)"]
-    JF["jogoDaForca.js (Domain)"]
+    JM["jogoDaMemoria.js (Domain)"]
     FE["public/js/wsClient.js + main.js + uiController.js (Frontend)"]
 
     Server -->|"usa"| WS
     Server -->|"usa"| HTTP
     Server -->|"cria e injeta no WS"| RM
     WS -->|"delega para"| RM
-    RM -->|"instancia e controla"| JF
+    RM -->|"instancia e controla"| JM
     FE -->|"WebSocket nativo do browser"| WS
     HTTP -->|"serve os arquivos"| FE
 ```
@@ -99,7 +99,7 @@ sequenceDiagram
     participant H as staticServer (HTTP)
     participant WS as wsController
     participant RM as roomManager
-    participant JF as JogoDaForca
+    participant JM as JogoDaMemoria
 
     B->>H: GET / (HTTP)
     H-->>B: index.html + js/*.js
@@ -107,7 +107,7 @@ sequenceDiagram
     B->>WS: Abre conexão WebSocket ws://localhost:3000
     B->>WS: { type: "criar_sala", payload: { apelido: "Ana" } }
     WS->>RM: criarSala(salaId, "Ana", ws)
-    RM->>JF: new JogoDaForca() + adicionarJogador("Ana")
+    RM->>JM: new JogoDaMemoria() + adicionarJogador("Ana")
     RM-->>WS: broadcastSync(salaId)
     WS-->>B: { type: "sala_criada", payload: { salaId: "AB12" } }
     WS-->>B: { type: "sync_estado", payload: { ... } }
@@ -115,21 +115,21 @@ sequenceDiagram
     Note over B,WS: Segundo jogador entra
     B->>WS: { type: "entrar_sala", payload: { apelido: "Bruno", salaId: "AB12" } }
     WS->>RM: entrarNaSala("AB12", "Bruno", ws)
-    RM->>JF: adicionarJogador("Bruno")
+    RM->>JM: adicionarJogador("Bruno")
     RM-->>WS: broadcastSync("AB12")
     WS-->>B: { type: "sync_estado" } (broadcast para todos na sala)
 
-    Note over B,WS: Host define a palavra
-    B->>WS: { type: "definir_palavra", payload: { palavra: "FORCA" } }
-    WS->>RM: sala.jogo.definirPalavra("Ana", "FORCA")
+    Note over B,WS: Host inicia o jogo
+    B->>WS: { type: "iniciar_jogo", payload: {} }
+    WS->>RM: sala.jogo.iniciarJogo("Ana")
     RM-->>WS: broadcastSync
-    WS-->>B: { type: "sync_estado", payload: { status: "jogando", palavraOculta: "_ _ _ _ _" } }
+    WS-->>B: { type: "sync_estado", payload: { status: "jogando", tabuleiro: [...cartas ocultas...] } }
 
-    Note over B,WS: Padawan chuta uma letra
-    B->>WS: { type: "chute", payload: { letra: "O" } }
-    WS->>RM: sala.jogo.chutarLetra("Bruno", "O")
+    Note over B,WS: Padawan vira uma carta
+    B->>WS: { type: "virar_carta", payload: { indice: 4 } }
+    WS->>RM: sala.jogo.virarCarta("Ana", 4)
     RM-->>WS: broadcastSync
-    WS-->>B: { type: "sync_estado", payload: { palavraOculta: "_ O _ _ _", vidasRestantes: 6 } }
+    WS-->>B: { type: "sync_estado", payload: { tabuleiro: [...], turnoAtual: "Ana" } }
 ```
 
 ---
@@ -138,12 +138,12 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> esperando_palavra : adicionarJogador() — primeiro jogador vira definidor
-    esperando_palavra --> jogando : definirPalavra() — apenas o definidor pode chamar
-    jogando --> vitoria : todas as letras da palavra foram reveladas
-    jogando --> derrota : vidasRestantes chegou a zero
-    vitoria --> esperando_palavra : passarCoroa() — próximo jogador vira definidor
-    derrota --> esperando_palavra : passarCoroa() — próximo jogador vira definidor
+    [*] --> esperando_jogadores : adicionarJogador()
+    esperando_jogadores --> jogando : iniciarJogo() — apenas o host pode chamar, embaralha cartas
+    jogando --> validando_par : segunda carta virada no mesmo turno
+    validando_par --> jogando : acerto (mantém turno) ou erro (passa turno)
+    jogando --> fim_de_jogo : todos os pares foram encontrados
+    fim_de_jogo --> esperando_jogadores : reiniciarJogo() — zera placar e tabuleiro
 ```
 
 ---
@@ -156,10 +156,9 @@ stateDiagram-v2
 |---|---|---|
 | `criar_sala` | `{ apelido }` | `handleCriarSala` |
 | `entrar_sala` | `{ apelido, salaId }` | `handleEntrarSala` |
-| `definir_palavra` | `{ palavra }` | `handleDefinirPalavra` |
-| `chute` | `{ letra }` | `handleChute` |
-| `passar_vez` | `{}` | `handlePassarVez` |
-| `passar_coroa` | `{}` | `handlePassarCoroa` |
+| `iniciar_jogo` | `{}` | `handleIniciarJogo` |
+| `virar_carta` | `{ indice }` | `handleVirarCarta` |
+| `reiniciar_jogo`| `{}` | `handleReiniciarJogo` |
 | `chat` | `{ msg }` | `handleChat` |
 
 ### Servidor → Cliente (broadcast)
@@ -167,9 +166,11 @@ stateDiagram-v2
 | `type` | `payload` |
 |---|---|
 | `sala_criada` | `{ salaId }` |
-| `sync_estado` | `{ vidasRestantes, letrasChutadas, jogadores, turnoAtual, status, palavraOculta }` |
+| `sync_estado` | `{ tabuleiro, placar, jogadores, turnoAtual, cartasViradasNoTurno, status }` |
 | `chat_msg` | `{ autor, msg }` |
 | `erro` | `{ msg }` |
+
+*(Nota de domínio: o `tabuleiro` enviado no `sync_estado` só deve conter os valores/IDs das cartas que já foram encontradas ou que estão temporariamente viradas no turno atual. As cartas não viradas devem ser mascaradas no backend para evitar trapaças no frontend).*
 
 ---
 

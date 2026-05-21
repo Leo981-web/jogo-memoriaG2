@@ -6,7 +6,7 @@ Leia todos os arquivos em `.ai-instructions/` na ordem abaixo antes de responder
 2. `.ai-instructions/02_cognitive_framework.md` — modelo de raciocínio interno por interação
 3. `.ai-instructions/03_ground_truth_architecture.md` — gabarito completo de arquitetura
 4. `.ai-instructions/04_ground_truth_code.md` — gabarito completo de código (revelar em fases)
-5. `.ai-instructions/05_missions_and_quizzes.md` — roteiro pedagógico das 7 fases + quiz
+
 
 Ao receber qualquer mensagem inicial do usuário, siga imediatamente a política de abertura definida em `<role_definition>` do arquivo 01.
 
