@@ -35,16 +35,16 @@ function conectar(nickname, room) {
                 UI.atualizarStatus("Aguardando início do jogo...");
                 break;
 
-            case "GAME_UPDATE":
-                // Renderiza o tabuleiro enviado pelo servidor
-                UI.renderizarTabuleiro(data.payload.board.cards, (index) => {
-                    socket.send(JSON.stringify({
-                        type: 'FLIP_CARD',
-                        payload: { cardIndex: index }
-                    }));
-                });
-                UI.atualizarStatus(`Turno de: ${data.payload.currentPlayer}`);
-                break;
+            case "GAME_STATE":
+            // Agora lemos direto de data.board, como o servidor envia
+            UI.renderizarTabuleiro(data.board, (index) => {
+                socket.send(JSON.stringify({
+                    type: 'CHOOSE_CARD', // Mudei para CHOOSE_CARD para bater com o seu server.js
+                    cardId: index + 1    // O seu domínio usa IDs começando em 1
+                }));
+            });
+            UI.atualizarStatus(`Turno de: ${data.currentPlayer}`);
+            break;
 
             case "ERROR":
                 alert(data.payload.message);
