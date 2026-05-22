@@ -18,21 +18,22 @@ export class GameSession {
 
   // --- NOVOS MÉTODOS ABAIXO ---
 
-  chooseCard(cardId) {
-    // 1. Encontra a carta clicada dentro do tabuleiro pelo ID
-    const card = this.board.cards.find(c => c.id === cardId);
+  chooseCard(index) {
+    // 1. Pega a carta exatamente na posição que foi clicada
+    const card = this.board.cards[index];
 
-    // Segurança: se a carta não existir, ou já estiver virada, ignora o clique
-    if (!card || card.isFlipped) return;
+    // Segurança: se a carta não existir, já estiver virada ou já tiver par, ignora
+    if (!card || card.isFlipped || card.isMatched) return;
 
-    // 2. Vira a carta para cima
+    // Impede de virar mais de 2 cartas ao mesmo tempo (evita bugs de clique rápido)
+    if (this.selectedCards.length >= 2) return;
+
     card.flip();
-    
-    // 3. Adiciona a carta na lista de seleção da rodada atual
     this.selectedCards.push(card);
 
-    // 4. Se o jogador virou 2 cartas, precisamos validar o par
     if (this.selectedCards.length === 2) {
+      // Pequeno delay para o jogador ver a segunda carta antes de validar
+      // (Opcional, mas melhora a experiência)
       this.checkMatch();
     }
   }

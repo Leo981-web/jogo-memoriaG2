@@ -2,6 +2,10 @@ import { UI } from './uiController.js';
 
 let socket = null;
 
+let meuNome = "";
+const nickname = document.getElementById("nickname").value;
+meuNome = nickname;
+
 UI.elements.btnJoin.addEventListener('click', () => {
     const nickname = UI.elements.inputNickname.value.trim();
     const room = UI.elements.inputRoom.value.trim();
@@ -38,10 +42,15 @@ function conectar(nickname, room) {
             case "GAME_STATE":
             // Agora lemos direto de data.board, como o servidor envia
             UI.renderizarTabuleiro(data.board, (index) => {
-                socket.send(JSON.stringify({
-                    type: 'CHOOSE_CARD', // Mudei para CHOOSE_CARD para bater com o seu server.js
-                    cardId: index + 1    // O seu domínio usa IDs começando em 1
-                }));
+
+                if (data.currentPlayer === meuNome) {
+                    socket.send(JSON.stringify({
+                        type: 'CHOOSE_CARD', // Mudei para CHOOSE_CARD para bater com o seu server.js
+                        cardId: index + 1    // O seu domínio usa IDs começando em 1
+                    }));
+                } else {
+                    alert("Não é sua vez!");
+                }
             });
             UI.atualizarStatus(`Turno de: ${data.currentPlayer}`);
             break;
