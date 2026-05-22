@@ -1,92 +1,58 @@
-const loginScreen = document.getElementById('login-screen');
-const gameScreen = document.getElementById('game-screen');
-const btnJoin = document.getElementById('btn-join');
-const inputNickname = document.getElementById('nickname');
-const inputRoom = document.getElementById('room-id');
-const boardElement = document.getElementById('board');
+import { UI } from './uiController.js';
 
 let socket = null;
 
-btnJoin.addEventListener('click', () => {
-    const nickname = inputNickname.value.trim();
-    const room = inputRoom.value.trim();
+UI.elements.btnJoin.addEventListener('click', () => {
+    const nickname = UI.elements.inputNickname.value.trim();
+    const room = UI.elements.inputRoom.value.trim();
 
     if (!nickname || !room) {
-        alert("Preenche o teu apelido e o ID da sala!");
+        alert("Preencha o apelido e a sala!");
         return;
     }
-
-    connectToServer(nickname, room);
+    conectar(nickname, room);
 });
 
-function connectToServer(nickname, room) {
-    socket = new WebSocket(`ws://${window.location.host}`)
+function conectar(nickname, room) {
+    // Porta fixa que você confirmou que funciona
+    socket = new WebSocket(`ws://localhost:3000`);
 
     socket.onopen = () => {
-        console.log("Conectado ao Servidor!")
-        
-        const joinMessage = {
+        console.log("Conexão estabelecida com o servidor!");
+        socket.send(JSON.stringify({
             type: "JOIN_ROOM",
-            payload: {nickname, room}
-        };
-        socket.send(JSON,stringify(joinMessage))
+            payload: { nickname, room }
+        }));
     };
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        handleServerMessage(data);
+        console.log("Dados recebidos:", data);
+
+        switch (data.type) {
+            case "ROOM_JOINED":
+                UI.alternarTelas(true);
+                UI.atualizarStatus("Aguardando início do jogo...");
+                break;
+
+            case "GAME_UPDATE":
+                // Renderiza o tabuleiro enviado pelo servidor
+                UI.renderizarTabuleiro(data.payload.board.cards, (index) => {
+                    socket.send(JSON.stringify({
+                        type: 'FLIP_CARD',
+                        payload: { cardIndex: index }
+                    }));
+                });
+                UI.atualizarStatus(`Turno de: ${data.payload.currentPlayer}`);
+                break;
+
+            case "ERROR":
+                alert(data.payload.message);
+                break;
+        }
     };
 
-    socket.onerror = (error) => {
-        console.error("Erro na conexão:", error);
+    socket.onerror = (err) => {
+        console.error("Erro no WebSocket. Verifique se o servidor Node está rodando.");
     };
-}
-
-function handleServerMessage(data) {
-    console.log("Mensagem recebida", data);
-
-    switch (data.type) {
-        case "ROOM_JOINED":
-            loginScreen.classList.add("hiden");
-            gameScreen.classList.remove("hidden");
-            break;
-
-        case "GAME_UPDATE":
-            renderBoard(data.payload.board.cards);
-            break;
-
-        case "ERROR":
-            alert(data.payload.message);
-            break;
-    }
-}
-
-function renderBoard(cards) {
-    boardElement.innerHTML = "";
-
-    cards.forEach((card, index) => {
-        const cardElement = document.createElement("div");
-        cardElement.classList.add("card");
-
-        if (card.isFlipped) cardElement.classList.add('flipped');
-        if (card.isMatched) cardElement.classList.add('matched');
-
-        cardElement.textContent = (card.isFlipped || card.isMatched) ? card.value : '?';
-    
-        cardElement.addEventListener('click', () => {
-            if (!card.isFlipped && !card.isMatched) {
-                sendFlipAction(index);
-            }
-        });
-
-        boardElement.appendChild(cardElement);
-    });
-}
-
-function sendFlipAction(index) {
-    const message = {
-        type: 'FLIP_CARD',
-        payload: { cardIndex: index }
-    };
-    socket.send(JSON.stringify(message));
 }

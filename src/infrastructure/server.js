@@ -1,6 +1,6 @@
-const http = require('http');
-const { WebSocketServer } = require('ws');
-const { GameSession } = require('../domain/game-session');
+import http from 'http';
+import { WebSocketServer } from 'ws';
+import { GameSession } from '../domain/game-session.js';
 
 // Criamos um servidor HTTP simples nativo do Node
 const server = http.createServer((req, res) => {

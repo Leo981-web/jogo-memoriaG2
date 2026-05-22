@@ -24,7 +24,7 @@ body {
 
 /* Telas */
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 #login-screen {
@@ -77,9 +77,10 @@ button:hover {
 /* O Tabuleiro (Grid) */
 #board {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    grid-template-columns: repeat(4, 100px); /* Ajustado para grid fixa ou auto-fit conforme sua preferência */
     gap: 15px;
     margin-top: 20px;
+    justify-content: center;
 }
 
 /* A Carta */
@@ -92,7 +93,7 @@ button:hover {
     justify-content: center;
     align-items: center;
     font-size: 2rem;
-    color: transparent; /* Esconde o valor inicialmente */
+    color: transparent;
     transition: transform 0.4s, background-color 0.3s;
     user-select: none;
 }

@@ -1,7 +1,7 @@
 // Importamos a classe Card que criamos antes para usá-la aqui dentro
-const { Card } = require('./card');
+import { Card } from './card.js';
 
-class Board {
+export class Board {
   constructor(values) {
     this.cards = [];
     this.generateBoard(values);
@@ -30,5 +30,3 @@ class Board {
     }
   }
 }
-
-module.exports = { Board };

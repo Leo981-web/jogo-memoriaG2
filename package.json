@@ -1,0 +1,22 @@
+{
+  "name": "jogo-da-memoria",
+  "version": "1.0.0",
+  "description": "Desafio de TDD - Jogo da Memória Multiplayer",
+  "type": "module",
+  "main": "src/domain/jogoDaMemoria.js",
+  "scripts": {
+    "test": "cross-env NODE_NO_WARNINGS=1 node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "cross-env NODE_NO_WARNINGS=1 node --experimental-vm-modules node_modules/jest/bin/jest.js --watchAll",
+    "test:coverage": "cross-env NODE_NO_WARNINGS=1 node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "dev": "nodemon src/infrastructure/server.js",
+    "start": "node src/infrastructure/server.js"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "cross-env": "^10.1.0",
+    "nodemon": "^3.1.14"
+  },
+  "dependencies": {
+    "ws": "^8.20.1"
+  }
+}

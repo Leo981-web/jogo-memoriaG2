@@ -1,7 +1,7 @@
 // Importamos o Board que criamos no passo anterior
-const { Board } = require('./board');
+import { Board } from "./board.js"
 
-class GameSession {
+export class GameSession {
   constructor(players, cardValues) {
     this.players = players; // Ex: ['Jogador 1', 'Jogador 2']
     this.currentPlayer = players[0]; // O primeiro jogador começa
@@ -68,5 +68,3 @@ class GameSession {
     this.currentPlayer = this.players[nextIndex];
   }
 }
-
-module.exports = { GameSession };

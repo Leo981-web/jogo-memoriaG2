@@ -1,4 +1,4 @@
-class Card {
+export class Card {
   constructor(id, value) {
     this.id = id;
     this.value = value;
@@ -16,6 +16,3 @@ class Card {
     this.isFlipped = false; // Altera o estado para virada para baixo
   }
 }
-
-// Exportamos a classe para que o arquivo de teste possa usá-la
-module.exports = { Card };

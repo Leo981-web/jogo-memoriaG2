@@ -2,8 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo da Memória Multiplayer</title>
+    <title>Jogo da Memória</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,18 +10,16 @@
         <section id="login-screen">
             <h1>Memória Real-Time</h1>
             <div class="form-group">
-                <input type="text" id="nickname" placeholder="Seu Nickname...">
-                <input type="text" id="room-id" placeholder="ID da Sala (ex: sala-1)">
+                <input type="text" id="nickname" placeholder="Nickname">
+                <input type="text" id="room-id" placeholder="ID da Sala">
                 <button id="btn-join">Entrar no Jogo</button>
             </div>
         </section>
     
         <section id="game-screen" class="hidden">
             <header>
-                <div id="status">Aguardando Jogadores...</div>
-                <div id="scoreboard"></div>
+                <div id="status">Aguardando...</div>
             </header>
-
             <main id="board"></main>
         </section>
     </div>
