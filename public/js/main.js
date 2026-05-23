@@ -4,7 +4,6 @@ let socket = null;
 
 let meuNome = "";
 const nickname = document.getElementById("nickname").value;
-meuNome = nickname;
 
 UI.elements.btnJoin.addEventListener('click', () => {
     const nickname = UI.elements.inputNickname.value.trim();
@@ -14,6 +13,8 @@ UI.elements.btnJoin.addEventListener('click', () => {
         alert("Preencha o apelido e a sala!");
         return;
     }
+
+    meuNome = nickname;
     conectar(nickname, room);
 });
 
@@ -46,7 +47,7 @@ function conectar(nickname, room) {
                 if (data.currentPlayer === meuNome) {
                     socket.send(JSON.stringify({
                         type: 'CHOOSE_CARD', // Mudei para CHOOSE_CARD para bater com o seu server.js
-                        cardId: index + 1    // O seu domínio usa IDs começando em 1
+                        cardId: index   // O seu domínio usa IDs começando em 1
                     }));
                 } else {
                     alert("Não é sua vez!");
