@@ -3,7 +3,6 @@ import { UI } from './uiController.js';
 let socket = null;
 
 let meuNome = "";
-const nickname = document.getElementById("nickname").value;
 
 UI.elements.btnJoin.addEventListener('click', () => {
     const nickname = UI.elements.inputNickname.value.trim();
@@ -19,8 +18,16 @@ UI.elements.btnJoin.addEventListener('click', () => {
 });
 
 function conectar(nickname, room) {
-    // Porta fixa que você confirmou que funciona
-    socket = new WebSocket(`ws://localhost:3000`);
+    // ─── MUDANÇA AQUI ─────────────────────────────────────────
+    // Descobre dinamicamente se o site usa criptografia (https -> wss) ou comum (http -> ws)
+    const protocolo = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    
+    // Pega o endereço atual do navegador (ex: localhost:3000 ou xxxx.ngrok-free.app)
+    const endereco = window.location.host;
+
+    // Conecta de forma inteligente no endereço certo!
+    socket = new WebSocket(protocolo + endereco);
+    // ──────────────────────────────────────────────────────────────────────
 
     socket.onopen = () => {
         console.log("Conexão estabelecida com o servidor!");
@@ -41,20 +48,16 @@ function conectar(nickname, room) {
                 break;
 
             case "GAME_STATE":
-            // Agora lemos direto de data.board, como o servidor envia
-            UI.renderizarTabuleiro(data.board, (index) => {
-
-                if (data.currentPlayer === meuNome) {
+                // Renderiza o tabuleiro com base no estado enviado pelo servidor
+                UI.renderizarTabuleiro(data.board, (index) => {
+                    // O clique envia a mensagem normalmente
                     socket.send(JSON.stringify({
-                        type: 'CHOOSE_CARD', // Mudei para CHOOSE_CARD para bater com o seu server.js
-                        cardId: index   // O seu domínio usa IDs começando em 1
+                        type: 'CHOOSE_CARD', 
+                        cardId: index   
                     }));
-                } else {
-                    alert("Não é sua vez!");
-                }
-            });
-            UI.atualizarStatus(`Turno de: ${data.currentPlayer}`);
-            break;
+                });
+                UI.atualizarStatus(`Turno de: ${data.currentPlayer}`);
+                break;
 
             case "ERROR":
                 alert(data.payload.message);
@@ -63,6 +66,6 @@ function conectar(nickname, room) {
     };
 
     socket.onerror = (err) => {
-        console.error("Erro no WebSocket. Verifique se o servidor Node está rodando.");
+        console.error("Erro no WebSocket. Verifique se o servidor Node está rodando ou se o túnel Ngrok caiu.");
     };
 }

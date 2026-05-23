@@ -1,5 +1,4 @@
-// Importamos o Board que criamos no passo anterior
-import { Board } from "./board.js"
+import { Board } from "./board.js";
 
 export class GameSession {
   constructor(players, cardValues) {
@@ -16,48 +15,49 @@ export class GameSession {
     this.board.shuffle();
   }
 
-  // --- NOVOS MÉTODOS ABAIXO ---
-
-  chooseCard(index) {
-    // 1. Pega a carta exatamente na posição que foi clicada
-    const card = this.board.cards[index];
+  // 1. Recebemos o ID e a função de atualizar a tela
+  chooseCard(index, onStateChange) {
+    // Convertemos o ID de texto para número para achar a carta certa
+    const numericIndex = Number(index);
+    const card = this.board.cards[numericIndex];
 
     // Segurança: se a carta não existir, já estiver virada ou já tiver par, ignora
     if (!card || card.isFlipped || card.isMatched) return;
 
-    // Impede de virar mais de 2 cartas ao mesmo tempo (evita bugs de clique rápido)
+    // Impede de virar mais de 2 cartas ao mesmo tempo
     if (this.selectedCards.length >= 2) return;
 
     card.flip();
     this.selectedCards.push(card);
 
     if (this.selectedCards.length === 2) {
-      // Pequeno delay para o jogador ver a segunda carta antes de validar
-      // (Opcional, mas melhora a experiência)
-      this.checkMatch();
+      // Repassamos a função adiante para rodar após o delay
+      this.checkMatch(onStateChange);
     }
   }
 
-  checkMatch() {
+  checkMatch(onStateChange) {
     const [card1, card2] = this.selectedCards;
 
     // Se os valores das duas cartas forem iguais, temos um PAR!
     if (card1.value === card2.value) {
-      // O jogador atual ganha 1 ponto
       this.scores[this.currentPlayer]++;
-      // Marcamos as cartas como combinadas (par encontrado)
       card1.isMatched = true;
       card2.isMatched = true;
+      this.selectedCards = []; // Limpa a seleção para a próxima rodada
     } else {
-      // Se errou, desvira as duas cartas
-      card1.unflip();
-      card2.unflip();
-      // Passa a vez para o próximo jogador
-      this.switchPlayer();
+      
+      // Delay de 1 segundo (1000ms)
+      setTimeout(() => {
+        card1.unflip(); // Vira a primeira carta para baixo
+        card2.unflip(); // Vira a segunda carta para baixo
+        this.switchPlayer(); // Passa a vez para o próximo jogador
+        this.selectedCards = []; // Limpa a seleção
+        
+        // Atualiza a interface após desvirar as cartas
+        if (onStateChange) onStateChange(); 
+      }, 1000); 
     }
-
-    // Limpa a lista de seleção para a próxima rodada de cliques
-    this.selectedCards = [];
   }
 
   switchPlayer() {
