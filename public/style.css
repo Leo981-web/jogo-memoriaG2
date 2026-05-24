@@ -110,3 +110,69 @@ button:hover {
     color: white;
     cursor: default;
 }
+
+/*Layout do Chat!*/
+#chat {
+    background-color: #d9d9d9;
+    padding: 10px;
+    width: 300px;
+}
+
+#chat-messages {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    height: 300px;
+    overflow-y: auto;
+}
+
+#chat-messages li {
+    margin-bottom: 8px;
+}
+
+.remetente {
+    font-weight: bold;
+    font-size: 0.85em;
+}
+
+.hora {
+    font-size: 0.75em;
+    color: #555;
+    margin-left: 5px;
+}
+
+#chat-input {
+    display: flex;
+    margin-top: 8px;
+    gap: 5px;
+}
+
+#chat-texto {
+    flex: 1;
+    padding: 5px;
+}
+
+#btn-enviar {
+    background-color: #888;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+#btn-enviar:hover {
+    background-color: #666;
+}
+
+/*Placar de pontos!!!*/
+#placar {
+    background-color: #d9d9d9;
+    padding: 8px 12px;
+    text-align: center;
+}
+
+#placar span {
+    font-weight: bold;
+    margin: 0 8px;
+    color: #444;
+}

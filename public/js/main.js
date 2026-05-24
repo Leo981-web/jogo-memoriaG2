@@ -18,16 +18,14 @@ UI.elements.btnJoin.addEventListener('click', () => {
 });
 
 function conectar(nickname, room) {
-    // ─── MUDANÇA AQUI ─────────────────────────────────────────
     // Descobre dinamicamente se o site usa criptografia (https -> wss) ou comum (http -> ws)
     const protocolo = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-    
+
     // Pega o endereço atual do navegador (ex: localhost:3000 ou xxxx.ngrok-free.app)
     const endereco = window.location.host;
 
     // Conecta de forma inteligente no endereço certo!
     socket = new WebSocket(protocolo + endereco);
-    // ──────────────────────────────────────────────────────────────────────
 
     socket.onopen = () => {
         console.log("Conexão estabelecida com o servidor!");
@@ -48,19 +46,25 @@ function conectar(nickname, room) {
                 break;
 
             case "GAME_STATE":
-                // Renderiza o tabuleiro com base no estado enviado pelo servidor
+                // Renderiza o tabuleiro com base no estado enviado pelo servidor:
                 UI.renderizarTabuleiro(data.board, (index) => {
                     // O clique envia a mensagem normalmente
                     socket.send(JSON.stringify({
-                        type: 'CHOOSE_CARD', 
-                        cardId: index   
+                        type: 'CHOOSE_CARD',
+                        cardId: index
                     }));
                 });
                 UI.atualizarStatus(`Turno de: ${data.currentPlayer}`);
+                UI.atualizarPlacar(data.scores);
                 break;
 
+            case "CHAT_MESSAGE":
+                UI.exibirMensagem(data.payload);
+                break;
+                
             case "ERROR":
                 alert(data.payload.message);
+                UI.alternarTelas(false);
                 break;
         }
     };
@@ -69,3 +73,16 @@ function conectar(nickname, room) {
         console.error("Erro no WebSocket. Verifique se o servidor Node está rodando ou se o túnel Ngrok caiu.");
     };
 }
+
+//Envia mensagem no chat :)
+document.getElementById('btn-enviar').addEventListener('click', () => {
+    const texto = document.getElementById('chat-texto').value.trim();
+    if (!texto || !socket) return;
+
+    socket.send(JSON.stringify({
+        type: 'CHAT_MESSAGE',
+        payload: { texto }
+    }));
+
+    document.getElementById('chat-texto').value = '';
+});

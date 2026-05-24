@@ -1,29 +1,40 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <title>Jogo da Memória</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="app">
         <section id="login-screen">
             <h1>Memória Real-Time</h1>
             <div class="form-group">
                 <input type="text" id="nickname" placeholder="Nickname">
-                <input type="text" id="room-id" placeholder="ID da Sala">
+                <input type="text" id="room-id" placeholder="Entre com um ID ou Crie um ID para uma nova Sala">
                 <button id="btn-join">Entrar no Jogo</button>
             </div>
         </section>
-    
+
         <section id="game-screen" class="hidden">
             <header>
                 <div id="status">Aguardando...</div>
             </header>
+            <div id="placar"></div>
             <main id="board"></main>
+            <aside id="chat">
+                <ul id="chat-messages"></ul>
+                <div id="chat-input">
+                    <input type="text" id="chat-texto" placeholder="Envie uma mensagem" maxlength="28">
+                    <button id="btn-enviar">Enviar</button>
+                </div>
+            </aside>
         </section>
     </div>
 
     <script src="js/main.js" type="module"></script>
 </body>
+
 </html>
