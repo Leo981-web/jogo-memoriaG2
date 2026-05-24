@@ -5,17 +5,101 @@
     <meta charset="UTF-8">
     <title>Jogo da Memória</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <div id="app">
         <section id="login-screen">
-            <h1>Memória Real-Time</h1>
-            <div class="form-group">
-                <input type="text" id="nickname" placeholder="Nickname">
-                <input type="text" id="room-id" placeholder="Entre com um ID ou Crie um ID para uma nova Sala">
-                <button id="btn-join">Entrar no Jogo</button>
+
+            <!-- Código decorativo no fundo -->
+            <div class="bg-code" aria-hidden="true">class MemoryGame {
+  constructor(roomId, player) {
+    this.roomId = roomId;
+    this.player = player;
+    this.board = new Board();
+    this.session = new GameSession();
+    this.flipped = [];
+  }
+
+  start() {
+    const deck = this.board.generateDeck();
+    const cards = shuffle(deck);
+    this.render(cards);
+    socket.emit('join', { roomId: this.roomId, player: this.player });
+  }
+
+  handleFlip(cardId) {
+    const card = this.board.getCard(cardId);
+    if (card.matched || this.flipped.length === 2) return;
+    card.flip();
+    this.flipped.push(card);
+    if (this.flipped.length === 2) {
+      this.checkMatch();
+    }
+  }
+
+  checkMatch() {
+    const [a, b] = this.flipped;
+    if (a.value === b.value) {
+      a.matched = true;
+      b.matched = true;
+      socket.emit('match', { roomId: this.roomId, pair: a.value });
+    } else {
+      setTimeout(() => { a.flip(); b.flip(); }, 900);
+    }
+    this.flipped = [];
+  }
+}
+
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+
+socket.on('game-start', (data) => {
+  game.start(data.cards);
+});
+
+socket.on('update', (state) => {
+  renderScore(state.scores);
+});
+
+const game = new MemoryGame();
+export default game;</div>
+
+            <!-- Card de login -->
+            <div class="login-card">
+                <div class="login-logo" aria-hidden="true">🧩</div>
+                <h1>Memória Real-Time</h1>
+                <p class="login-subtitle">
+                    <span class="login-dollar">$</span> tema: <span class="login-highlight">programação</span>
+                </p>
+
+                <div class="form-group">
+                    <div class="field-wrap">
+                        <label class="field-label" for="nickname">// seu nickname</label>
+                        <input type="text" id="nickname" placeholder="player = 'SeuNome'">
+                    </div>
+                    <div class="field-wrap">
+                        <label class="field-label" for="room-id">// id da sala</label>
+                        <input type="text" id="room-id" placeholder="sala-id ou novo ID">
+                    </div>
+                    <button id="btn-join">Entrar no Jogo</button>
+                </div>
+
+                <div class="login-divider">
+                    <span></span><small>// or create</small><span></span>
+                </div>
+
+                <div class="login-tags" aria-hidden="true">
+                    <span>JavaScript</span>
+                    <span>HTML</span>
+                    <span>CSS</span>
+                    <span>Git</span>
+                </div>
             </div>
+
         </section>
 
         <section id="game-screen" class="hidden">
