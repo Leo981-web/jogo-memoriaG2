@@ -2,123 +2,178 @@
 <html lang="pt-BR">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Jogo da Memória</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Jogo da Memória</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 </head>
 
 <body>
-    <div id="app">
-        <section id="login-screen">
+  <div id="app">
+    <section id="login-screen">
 
-            <!-- Código decorativo no fundo -->
-            <div class="bg-code" aria-hidden="true">class MemoryGame {
-  constructor(roomId, player) {
-    this.roomId = roomId;
-    this.player = player;
-    this.board = new Board();
-    this.session = new GameSession();
-    this.flipped = [];
-  }
+      <!-- Código decorativo no fundo -->
+      <div class="bg-code" aria-hidden="true">class MemoryGame {
+        constructor(roomId, player) {
+        this.roomId = roomId;
+        this.player = player;
+        this.board = new Board();
+        this.session = new GameSession();
+        this.flipped = [];
+        }
 
-  start() {
-    const deck = this.board.generateDeck();
-    const cards = shuffle(deck);
-    this.render(cards);
-    socket.emit('join', { roomId: this.roomId, player: this.player });
-  }
+        start() {
+        const deck = this.board.generateDeck();
+        const cards = shuffle(deck);
+        this.render(cards);
+        socket.emit('join', { roomId: this.roomId, player: this.player });
+        }
 
-  handleFlip(cardId) {
-    const card = this.board.getCard(cardId);
-    if (card.matched || this.flipped.length === 2) return;
-    card.flip();
-    this.flipped.push(card);
-    if (this.flipped.length === 2) {
-      this.checkMatch();
-    }
-  }
+        handleFlip(cardId) {
+        const card = this.board.getCard(cardId);
+        if (card.matched || this.flipped.length === 2) return;
+        card.flip();
+        this.flipped.push(card);
+        if (this.flipped.length === 2) {
+        this.checkMatch();
+        }
+        }
 
-  checkMatch() {
-    const [a, b] = this.flipped;
-    if (a.value === b.value) {
-      a.matched = true;
-      b.matched = true;
-      socket.emit('match', { roomId: this.roomId, pair: a.value });
-    } else {
-      setTimeout(() => { a.flip(); b.flip(); }, 900);
-    }
-    this.flipped = [];
-  }
-}
+        checkMatch() {
+        const [a, b] = this.flipped;
+        if (a.value === b.value) {
+        a.matched = true;
+        b.matched = true;
+        socket.emit('match', { roomId: this.roomId, pair: a.value });
+        } else {
+        setTimeout(() => { a.flip(); b.flip(); }, 900);
+        }
+        this.flipped = [];
+        }
+        }
 
-function shuffle(arr) {
-  return arr.sort(() => Math.random() - 0.5);
-}
+        function shuffle(arr) {
+        return arr.sort(() => Math.random() - 0.5);
+        }
 
-socket.on('game-start', (data) => {
-  game.start(data.cards);
-});
+        socket.on('game-start', (data) => {
+        game.start(data.cards);
+        });
 
-socket.on('update', (state) => {
-  renderScore(state.scores);
-});
+        socket.on('update', (state) => {
+        renderScore(state.scores);
+        });
 
-const game = new MemoryGame();
-export default game;</div>
+        const game = new MemoryGame();
+        export default game;</div>
 
-            <!-- Card de login -->
-            <div class="login-card">
-                <div class="login-logo" aria-hidden="true">🧩</div>
-                <h1>Memória Real-Time</h1>
-                <p class="login-subtitle">
-                    <span class="login-dollar">$</span> tema: <span class="login-highlight">programação</span>
-                </p>
+      <!-- Card de login -->
+      <div class="login-card">
+        <div class="login-logo" aria-hidden="true">🧩</div>
+        <h1>Memória Real-Time</h1>
+        <p class="login-subtitle">
+          <span class="login-dollar">$</span> tema: <span class="login-highlight">programação</span>
+        </p>
 
-                <div class="form-group">
-                    <div class="field-wrap">
-                        <label class="field-label" for="nickname">// seu nickname</label>
-                        <input type="text" id="nickname" placeholder="player = 'SeuNome'">
-                    </div>
-                    <div class="field-wrap">
-                        <label class="field-label" for="room-id">// id da sala</label>
-                        <input type="text" id="room-id" placeholder="sala-id ou novo ID">
-                    </div>
-                    <button id="btn-join">Entrar no Jogo</button>
-                </div>
+        <div class="form-group">
+          <div class="field-wrap">
+            <label class="field-label" for="nickname">// seu nickname</label>
+            <input type="text" id="nickname" placeholder="player = 'SeuNome'">
+          </div>
+          <div class="field-wrap">
+            <label class="field-label" for="room-id">// id da sala</label>
+            <input type="text" id="room-id" placeholder="sala-id ou novo ID">
+          </div>
+          <button id="btn-join">Entrar no Jogo</button>
+        </div>
 
-                <div class="login-divider">
-                    <span></span><small>// or create</small><span></span>
-                </div>
+        <div class="login-divider">
+          <span></span><small>// or create</small><span></span>
+        </div>
 
-                <div class="login-tags" aria-hidden="true">
-                    <span>JavaScript</span>
-                    <span>HTML</span>
-                    <span>CSS</span>
-                    <span>Git</span>
-                </div>
-            </div>
+        <div class="login-tags" aria-hidden="true">
+          <span>JavaScript</span>
+          <span>HTML</span>
+          <span>CSS</span>
+          <span>Git</span>
+        </div>
+      </div>
 
-        </section>
+    </section>
 
-        <section id="game-screen" class="hidden">
-            <header>
-                <div id="status">Aguardando...</div>
-            </header>
-            <div id="placar"></div>
-            <main id="board"></main>
-            <aside id="chat">
-                <ul id="chat-messages"></ul>
-                <div id="chat-input">
-                    <input type="text" id="chat-texto" placeholder="Envie uma mensagem" maxlength="28">
-                    <button id="btn-enviar">Enviar</button>
-                </div>
-            </aside>
-        </section>
-    </div>
+    <section id="game-screen" class="hidden">
+      <!-- TOPO -->
+      <header>
+        <div id="status">
+          Aguardando início do jogo...
+        </div>
 
-    <script src="js/main.js" type="module"></script>
+        <div id="room-info">
+          <span class="online-dot">●</span>
+          <span id="online-count">Online: 0</span>
+          <span id="room-name" class="room-name">Sala: -</span>
+        </div>
+      </header>
+
+
+      <!-- PLACAR -->
+      <section id="placar">
+
+        <div class="placar-title">
+          &lt;/&gt; PLACAR
+        </div>
+
+        <div class="players-score">
+          <div class="player">
+            <span class="player-name blue">Kauê</span>
+            <span>0 pts</span>
+          </div>
+
+          <div class="player">
+            <span class="player-name purple">Maria</span>
+            <span>0 pts</span>
+          </div>
+
+          <div class="player">
+            <span class="player-name green">João</span>
+            <span>0 pts</span>
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- TABULEIRO -->
+      <main id="board">
+        <!-- cards entram aqui pelo JS -->
+      </main>
+
+
+      <!-- CHAT -->
+      <aside id="chat">
+
+        <div id="chat-header">
+          CHAT DA SALA
+        </div>
+
+        <ul id="chat-messages"></ul>
+
+        <div id="chat-input">
+          <input type="text" id="chat-texto" placeholder="Envie uma mensagem..." maxlength="28">
+
+          <button id="btn-enviar">
+            Enviar
+          </button>
+        </div>
+
+      </aside>
+
+    </section>
+  </div>
+
+  <script src="js/main.js" type="module"></script>
 </body>
 
 </html>

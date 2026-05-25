@@ -1,8 +1,15 @@
 import { UI } from './uiController.js';
 
-let socket = null;
+const onlineCount = document.getElementById('online-count');
+const roomName = document.getElementById('room-name');
 
+let socket = null;
 let meuNome = "";
+
+
+/* =========================
+   ENTRAR NA SALA
+========================= */
 
 UI.elements.btnJoin.addEventListener('click', () => {
     const nickname = UI.elements.inputNickname.value.trim();
@@ -17,51 +24,74 @@ UI.elements.btnJoin.addEventListener('click', () => {
     conectar(nickname, room);
 });
 
-function conectar(nickname, room) {
-    // Descobre dinamicamente se o site usa criptografia (https -> wss) ou comum (http -> ws)
-    const protocolo = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 
-    // Pega o endereço atual do navegador (ex: localhost:3000 ou xxxx.ngrok-free.app)
+/* =========================
+   CONECTAR WEBSOCKET
+========================= */
+
+function conectar(nickname, room) {
+    const protocolo =
+        window.location.protocol === 'https:'
+            ? 'wss://'
+            : 'ws://';
+
     const endereco = window.location.host;
 
-    // Conecta de forma inteligente no endereço certo!
     socket = new WebSocket(protocolo + endereco);
 
     socket.onopen = () => {
-        console.log("Conexão estabelecida com o servidor!");
+        console.log("Conectado ao servidor!");
+
         socket.send(JSON.stringify({
             type: "JOIN_ROOM",
-            payload: { nickname, room }
+            payload: {
+                nickname,
+                room
+            }
         }));
     };
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log("Dados recebidos:", data);
+
+        console.log("Recebido:", data);
 
         switch (data.type) {
+
             case "ROOM_JOINED":
                 UI.alternarTelas(true);
                 UI.atualizarStatus("Aguardando início do jogo...");
+
+                // atualiza nome da sala
+                roomName.textContent = `Sala: ${room}`;
                 break;
 
+
             case "GAME_STATE":
-                // Renderiza o tabuleiro com base no estado enviado pelo servidor:
-                UI.renderizarTabuleiro(data.board, (index) => {
-                    // O clique envia a mensagem normalmente
-                    socket.send(JSON.stringify({
-                        type: 'CHOOSE_CARD',
-                        cardId: index
-                    }));
-                });
-                UI.atualizarStatus(`Turno de: ${data.currentPlayer}`);
+                UI.renderizarTabuleiro(
+                    data.board,
+                    (cardId) => {
+                        socket.send(JSON.stringify({
+                            type: "CHOOSE_CARD",
+                            cardId
+                        }));
+                    }
+                );
+
+                UI.atualizarStatus(data.status);
                 UI.atualizarPlacar(data.scores);
+
+                // atualiza quantidade online
+                const totalJogadores = Object.keys(data.scores).length;
+                onlineCount.textContent = `Online: ${totalJogadores}`;
                 break;
+
 
             case "CHAT_MESSAGE":
                 UI.exibirMensagem(data.payload);
                 break;
-                
+
+
             case "ERROR":
                 alert(data.payload.message);
                 UI.alternarTelas(false);
@@ -69,20 +99,46 @@ function conectar(nickname, room) {
         }
     };
 
-    socket.onerror = (err) => {
-        console.error("Erro no WebSocket. Verifique se o servidor Node está rodando ou se o túnel Ngrok caiu.");
+    socket.onerror = () => {
+        console.error(
+            "Erro no WebSocket. Verifique se o servidor está rodando."
+        );
+    };
+
+    socket.onclose = () => {
+        console.log("Conexão encerrada.");
     };
 }
 
-//Envia mensagem no chat :)
-document.getElementById('btn-enviar').addEventListener('click', () => {
-    const texto = document.getElementById('chat-texto').value.trim();
+
+/* =========================
+   CHAT
+========================= */
+
+document
+    .getElementById('btn-enviar')
+    .addEventListener('click', enviarMensagem);
+
+document
+    .getElementById('chat-texto')
+    .addEventListener('keypress', (e) => {
+        if (e.key === "Enter") {
+            enviarMensagem();
+        }
+    });
+
+function enviarMensagem() {
+    const input = document.getElementById('chat-texto');
+    const texto = input.value.trim();
+
     if (!texto || !socket) return;
 
     socket.send(JSON.stringify({
         type: 'CHAT_MESSAGE',
-        payload: { texto }
+        payload: {
+            texto
+        }
     }));
 
-    document.getElementById('chat-texto').value = '';
-});
+    input.value = '';
+}

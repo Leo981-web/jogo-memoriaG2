@@ -8,7 +8,14 @@ import { GameSession } from '../domain/game-session.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const valoresCartas = ['🍎', '🍌', '🍇', '🍉', '🍓', '🥑'];
+const valoresCartas = [
+  'javascript',
+  'python',
+  'java',
+  'cpp',
+  'csharp',
+  'html'
+];
 const rooms = {};
 
 function getOrCreateRoom(roomId) {
