@@ -82,8 +82,7 @@ function conectar(nickname, room) {
                 UI.atualizarPlacar(data.scores);
 
                 // atualiza quantidade online
-                const totalJogadores = Object.keys(data.scores).length;
-                onlineCount.textContent = `Online: ${totalJogadores}`;
+                onlineCount.textContent = `Online: ${data.online}`;
                 break;
 
             case "FIM_DE_JOGO":

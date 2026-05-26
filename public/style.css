@@ -361,56 +361,113 @@ body:has(#login-screen:not(.hidden)) #app {
 
 /* PLACAR */
 
-#placar {
-    grid-area: placar;
 
-    padding: 25px 30px;
-    border-radius: 22px;
-
-    background: rgba(10, 15, 25, .75);
-    border: 1px solid rgba(80, 140, 255, .20);
+#placar{
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 22px 0 30px;
 }
 
-.players-score {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 18px;
-}
+.score-item{
+    position: relative;
+    min-width: 190px;
+    padding: 16px 24px;
+    border-radius: 18px;
 
-.player {
     display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 8px;
+
+    backdrop-filter: blur(14px);
+
+    background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.08),
+        rgba(255,255,255,0.03)
+    );
+
+    border: 1px solid rgba(255,255,255,0.10);
+
+    overflow: hidden;
+}
+
+.score-item::before{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius:18px;
+    padding:1px;
+
+    background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.15),
+        transparent,
+        rgba(255,255,255,0.05)
+    );
+
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+   
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+/* jogador 1 */
+.score-item:first-child{
+    box-shadow:
+        0 0 20px rgba(47,124,255,0.18),
+        inset 0 0 20px rgba(47,124,255,0.04);
+}
+
+/* jogador 2 */
+.score-item:last-child{
+    box-shadow:
+        0 0 20px rgba(168,85,247,0.18),
+        inset 0 0 20px rgba(168,85,247,0.04);
+}
+
+.score-name{
+    font-size: 14px;
+    font-weight: 600;
+    color: #dbe7ff;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+}
+
+/* pontuação */
+.score-points{
+    font-size: 28px;
+    font-weight: 800;
     color: white;
 }
 
-.blue {
-    color: #3b82f6;
+/* cor individual */
+.score-item:first-child .score-points{
+    color: #56a8ff;
+    text-shadow: 0 0 14px rgba(86,168,255,.5);
 }
 
-.purple {
-    color: #a855f7;
+.score-item:last-child .score-points{
+    color: #c084fc;
+    text-shadow: 0 0 14px rgba(192,132,252,.5);
 }
 
-.green {
-    color: #22c55e;
-}
-
-#board {
-    grid-area: board;
-
-    min-height: 620px;
-
-    padding: 22px;
-    border-radius: 22px;
-
-    background: rgba(10, 15, 25, .75);
-    border: 1px solid rgba(80, 140, 255, .20);
-
+#board{
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 18px;
-}
+    grid-template-columns: repeat(4, 1fr);
 
+    gap: 22px;
+
+    width: min(75vw, 900px);
+    margin: 0 auto;
+}
 #chat {
     grid-area: chat;
 
@@ -465,18 +522,51 @@ body:has(#login-screen:not(.hidden)) #app {
     cursor: pointer;
 }
 
+.remetente{
+    font-size: 15px;
+    font-weight: 700;
+
+    display: inline-block;
+    margin-bottom: 4px;
+}
+
+/* jogador 1 (roxo) */
+#chat-messages li:nth-child(odd) .remetente{
+    color: #c084fc;
+    text-shadow: 0 0 8px rgba(192,132,252,.35);
+}
+
+/* jogador 2 (azul) */
+#chat-messages li:nth-child(even) .remetente{
+    color: #56a8ff;
+    text-shadow: 0 0 8px rgba(86,168,255,.35);
+}
+
+
+/* horário */
+.hora{
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    margin-left: 8px;
+}
+
+/* texto da mensagem */
+#chat-messages li p{
+    color: #e8ecf7;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-top: 2px;
+}
+
 /* CARDS MEMÓRIA */
-
-.memory-card {
-    position: relative;
+.memory-card{
     width: 100%;
-    height: 150px;
+    aspect-ratio: 1 / 1;
+
+    position: relative;
     cursor: pointer;
-
     transform-style: preserve-3d;
-    transition: transform .5s;
-
-    perspective: 1000px;
+    transition: transform .45s;
 }
 
 .memory-card.flipped {
@@ -536,6 +626,51 @@ body:has(#login-screen:not(.hidden)) #app {
 
     text-shadow:
         0 0 10px rgba(255,255,255,.15);
+}
+.card-icon i{
+    color: #f8fafc;
+    transition: .25s;
+}
+
+.fa-js{
+    color: #f7df1e !important;
+    text-shadow:
+        0 0 12px rgba(247,223,30,.45);
+}
+
+
+.fa-python{
+    color: #4ea8ff !important;
+    text-shadow:
+        0 0 12px rgba(78,168,255,.45);
+}
+
+
+.fa-java{
+    color: #ff7b54 !important;
+    text-shadow:
+        0 0 12px rgba(255,123,84,.45);
+}
+
+
+.fa-html5{
+    color: #ff6b35 !important;
+    text-shadow:
+        0 0 12px rgba(255,107,53,.45);
+}
+
+
+.fa-code{
+    color: #a78bfa !important;
+    text-shadow:
+        0 0 12px rgba(167,139,250,.45);
+}
+
+
+.fa-hashtag{
+    color: #22d3ee !important;
+    text-shadow:
+        0 0 12px rgba(34,211,238,.45);
 }
 
 .memory-card:hover .card-icon {
