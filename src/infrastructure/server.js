@@ -66,7 +66,7 @@ const wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws) => {
   console.log('Novo jogador conectado via WebSocket!');
-  
+
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message);
@@ -118,7 +118,7 @@ wss.on('connection', (ws) => {
         }
 
         sala.game.chooseCard(data.cardId, () => {
-          
+
           // 1. Primeiro atualizamos a tela para todo mundo ver as cartas e o placar atualizado
           transmitirParaSala(ws.room);
 
@@ -134,7 +134,7 @@ wss.on('connection', (ws) => {
             });
           }
         });
-        
+
         // Atualiza a tela imediatamente quando a primeira/segunda carta é virada (antes do delay)
 
         sala.game.chooseCard(data.cardId, () => transmitirParaSala(ws.room));
@@ -180,13 +180,24 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     if (ws.room && rooms[ws.room]) {
       const sala = rooms[ws.room];
+
+      // remove conexão
       sala.clients = sala.clients.filter(c => c !== ws);
 
+      // remove jogador da lista ativa
+      sala.jogadoresAtivos =
+        sala.jogadoresAtivos.filter(nome => nome !== ws.nickname);
+
+      // atualiza quem ficou na sala
+      transmitirParaSala(ws.room);
+
+      // se ninguém ficou, apaga a sala
       if (sala.clients.length === 0) {
         delete rooms[ws.room];
         console.log(`Sala "${ws.room}" removida por estar vazia.`);
       }
     }
+
     console.log('Jogador desconectado.');
   });
 });
@@ -198,11 +209,13 @@ function transmitirParaSala(roomId) {
     if (client.readyState === 1) { // Só envia se a conexão estiver aberta
       if (sala.game) {
         // Se o jogo já começou, envia o estado real
+
         client.send(JSON.stringify({
           type: 'GAME_STATE',
           board: sala.game.board.cards,
           currentPlayer: sala.game.currentPlayer,
           scores: sala.game.scores,
+          online: sala.jogadoresAtivos.length,
           status: sala.game.isGameOver ? "Fim de Jogo! Verifica o Placar!" : `Turno de: ${sala.game.currentPlayer}`
         }));
       } else {
@@ -212,6 +225,7 @@ function transmitirParaSala(roomId) {
           board: [],
           currentPlayer: "Aguardando...",
           scores: {},
+          online: sala.jogadoresAtivos.length,
           status: "Aguardando o segundo jogador entrar na sala..."
         }));
       }

@@ -88,9 +88,12 @@ export const UI = {
 
     atualizarPlacar(scores) {
         this.elements.placar.innerHTML = Object.entries(scores)
-            .map(([jogador, pontos]) =>
-                `<span>${jogador}: ${pontos}</span>`
-            )
-            .join(' | ');
+            .map(([jogador, pontos]) => `
+            <div class="score-item">
+                <span class="score-name">${jogador}</span>
+                <span class="score-points">${pontos} pts</span>
+            </div>
+        `)
+            .join('');
     },
 };
