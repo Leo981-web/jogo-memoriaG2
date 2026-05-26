@@ -20,7 +20,6 @@ export class Board {
     });
   }
 
-  // --- NOVO MÉTODO ABAIXO ---
   shuffle() {
     // Algoritmo de Fisher-Yates para embaralhar o array de cartas
     for (let i = this.cards.length - 1; i > 0; i--) {

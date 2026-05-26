@@ -93,6 +93,4 @@ export class GameSession {
 
     return houveEmpate ? 'Empate' : vencedor;
   }
-
-
 }

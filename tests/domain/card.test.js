@@ -10,8 +10,6 @@ describe('Domain: Card (Entidade de Carta)', () => {
     expect(card.isMatched).toBe(false);
   });
 
-  // --- NOVOS TESTES ABAIXO ---
-
   test('Deve virar a carta para cima', () => {
     const card = new Card(1, 'A');
     card.flip(); // Método que vamos criar

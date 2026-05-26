@@ -92,10 +92,10 @@ function conectar(nickname, room) {
                     // Define o texto com base no resultado
                     if (data.vencedor === 'Empate') {
                         
-                        textoMensagem.textContent = 'Deu ruim! A partida terminou em empate!';
+                        textoMensagem.textContent = 'A partida terminou em empate!';
                     } else {
                        
-                        textoMensagem.textContent = `Parabéns! O vencedor é: ${data.vencedor}!`;
+                        textoMensagem.textContent = `O vencedor é: ${data.vencedor}!`;
                     }
 
                     // Remove a classe "escondido" para exibir o modal na tela

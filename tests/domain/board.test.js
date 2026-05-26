@@ -8,8 +8,6 @@ describe('Domain: Board (Entidade do Tabuleiro)', () => {
     expect(board.cards.length).toBe(8);
   });
 
-  // --- NOVO TESTE ABAIXO ---
-
   test('Deve embaralhar as cartas do tabuleiro', () => {
     const values = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Mais cartas para garantir o teste
     const board = new Board(values);

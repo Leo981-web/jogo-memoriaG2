@@ -6,8 +6,6 @@ export class Card {
     this.isMatched = false; // Começa sem par encontrado
   }
 
-  // --- NOVOS MÉTODOS ABAIXO ---
-
   flip() {
     this.isFlipped = true; // Altera o estado para virada para cima
   }
