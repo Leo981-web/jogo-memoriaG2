@@ -45,18 +45,22 @@ export class GameSession {
       card1.isMatched = true;
       card2.isMatched = true;
       this.selectedCards = []; // Limpa a seleção para a próxima rodada
-    } else {
-      
-      // Delay de 1 segundo (1000ms)
-      setTimeout(() => {
-        card1.unflip(); // Vira a primeira carta para baixo
-        card2.unflip(); // Vira a segunda carta para baixo
-        this.switchPlayer(); // Passa a vez para o próximo jogador
-        this.selectedCards = []; // Limpa a seleção
+      this.winner = this.checkWinner();
+
+      if (onStateChange) onStateChange();
+
+      } else {
         
-        // Atualiza a interface após desvirar as cartas
-        if (onStateChange) onStateChange(); 
-      }, 1000); 
+        // Delay de 1 segundo (1000ms)
+        setTimeout(() => {
+          card1.unflip(); // Vira a primeira carta para baixo
+          card2.unflip(); // Vira a segunda carta para baixo
+          this.switchPlayer(); // Passa a vez para o próximo jogador
+          this.selectedCards = []; // Limpa a seleção
+          
+          // Atualiza a interface após desvirar as cartas
+          if (onStateChange) onStateChange(); 
+        }, 1000); 
     }
   }
 
@@ -68,4 +72,27 @@ export class GameSession {
     // Atualiza o jogador da vez
     this.currentPlayer = this.players[nextIndex];
   }
+
+  checkWinner() {
+    const jogoAcabou = this.board.cards.every(card => card.isMatched);
+    if (!jogoAcabou) return null; 
+
+    let vencedor = null;
+    let maiorPontuacao = -1;
+    let houveEmpate = false;
+
+    for (const [jogador, pontos] of Object.entries(this.scores)) {
+      if (pontos > maiorPontuacao) {
+        maiorPontuacao = pontos;
+        vencedor = jogador;
+        houveEmpate = false; 
+      } else if (pontos === maiorPontuacao) {
+        houveEmpate = true; 
+      }
+    }
+
+    return houveEmpate ? 'Empate' : vencedor;
+  }
+
+
 }

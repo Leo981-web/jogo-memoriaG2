@@ -117,6 +117,26 @@ wss.on('connection', (ws) => {
           return;
         }
 
+        sala.game.chooseCard(data.cardId, () => {
+          
+          // 1. Primeiro atualizamos a tela para todo mundo ver as cartas e o placar atualizado
+          transmitirParaSala(ws.room);
+
+          // 2. Depois, verificamos se essa jogada definiu um vencedor
+          if (sala.game.winner) {
+            sala.clients.forEach(client => {
+              if (client.readyState === 1) { // 1 = OPEN
+                client.send(JSON.stringify({
+                  type: 'FIM_DE_JOGO',
+                  vencedor: sala.game.winner
+                }));
+              }
+            });
+          }
+        });
+        
+        // Atualiza a tela imediatamente quando a primeira/segunda carta é virada (antes do delay)
+
         sala.game.chooseCard(data.cardId, () => transmitirParaSala(ws.room));
         transmitirParaSala(ws.room);
       }

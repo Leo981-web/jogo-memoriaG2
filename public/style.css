@@ -682,3 +682,93 @@ body:has(#login-screen:not(.hidden)) #app {
     font-weight:700;
     font-size:18px;
 }
+
+
+#modal-fim-jogo {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(5, 10, 20, 0.85); /* Fundo escuro combinando com o game-screen */
+    backdrop-filter: blur(4px); /* Efeito de desfoque moderno */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+#modal-fim-jogo.escondido {
+    display: none !important;
+}
+
+/* O .modal-conteudo já pega os estilos do .login-card, 
+   só ajustamos margens e garantimos que fique centralizado */
+.modal-conteudo {
+    margin: 0 20px;
+}
+
+.modal-conteudo h2 {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: #e6edf3;
+    margin-bottom: 4px;
+}
+
+.modal-botoes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 1.5rem;
+}
+
+/* Botão Primário (Reaproveitando o estilo do btn-join) */
+#btn-reiniciar {
+    width: 100%;
+    padding: 12px;
+    background: #1f6feb;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+}
+
+#btn-reiniciar:hover {
+    background: #388bfd;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(31, 111, 235, 0.35);
+}
+
+#btn-reiniciar:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* Botão Secundário (Sair - Tema Danger/Ghost) */
+#btn-sair {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    color: #8b949e;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+#btn-sair:hover {
+    border-color: #f85149;
+    color: #f85149;
+    background: rgba(248, 81, 73, 0.1);
+}
+
+#btn-sair:active {
+    transform: translateY(0);
+}

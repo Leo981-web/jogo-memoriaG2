@@ -86,6 +86,25 @@ function conectar(nickname, room) {
                 onlineCount.textContent = `Online: ${totalJogadores}`;
                 break;
 
+            case "FIM_DE_JOGO":
+                setTimeout(() => {
+                    const modal = document.getElementById('modal-fim-jogo');
+                    const textoMensagem = document.getElementById('mensagem-vencedor');
+                    const textoLogo = documento.getElementById('login-logo')
+                    // Define o texto com base no resultado
+                    if (data.vencedor === 'Empate') {
+                        textoLogo.textContent = '🤒'
+                        textoMensagem.textContent = 'Deu ruim! A partida terminou em empate!';
+                    } else {
+                        textoLogo.textContent = '🏆'
+                        textoMensagem.textContent = `Parabéns! O vencedor é: ${data.vencedor}!`;
+                    }
+
+                    // Remove a classe "escondido" para exibir o modal na tela
+                    modal.classList.remove('escondido');
+                }, 500); // 500ms de delay para dar tempo do jogador ver a última carta virada
+                break;
+
 
             case "CHAT_MESSAGE":
                 UI.exibirMensagem(data.payload);
@@ -141,4 +160,31 @@ function enviarMensagem() {
     }));
 
     input.value = '';
+}
+
+const btnReiniciar = document.getElementById('btn-reiniciar');
+
+if (btnReiniciar) {
+    btnReiniciar.addEventListener('click', () => {
+        console.log("Clicou em reiniciar");
+        const modal = document.getElementById('modal-fim-jogo');
+        modal.classList.add('escondido');
+
+        if (socket) {
+            socket.send(JSON.stringify({ type: 'RESTART' }));
+        }
+    });
+} else {
+    console.error("ERRO: Botão btn-reiniciar não encontrado!");
+}
+
+const btnSair = document.getElementById("btn-sair");
+
+if (btnSair) {
+    btnSair.addEventListener("click", () => {
+        console.log("Clicou em sair");
+        UI.alternarTelas(false);
+        const modal = document.getElementById('modal-fim-jogo');
+        modal.classList.add("escondido")
+    })
 }
