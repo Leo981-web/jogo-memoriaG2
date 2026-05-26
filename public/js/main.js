@@ -90,13 +90,12 @@ function conectar(nickname, room) {
                 setTimeout(() => {
                     const modal = document.getElementById('modal-fim-jogo');
                     const textoMensagem = document.getElementById('mensagem-vencedor');
-                    const textoLogo = documento.getElementById('login-logo')
                     // Define o texto com base no resultado
                     if (data.vencedor === 'Empate') {
-                        textoLogo.textContent = '🤒'
+                        
                         textoMensagem.textContent = 'Deu ruim! A partida terminou em empate!';
                     } else {
-                        textoLogo.textContent = '🏆'
+                       
                         textoMensagem.textContent = `Parabéns! O vencedor é: ${data.vencedor}!`;
                     }
 
